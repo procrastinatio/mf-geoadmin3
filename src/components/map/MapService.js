@@ -688,6 +688,7 @@ goog.require('ga_urlutils_service');
                 dimensions: {
                   'Time': timestamp
                 },
+                cacheSize: 16,
                 projection: gaGlobalOptions.defaultEpsg,
                 requestEncoding: 'REST',
                 tileGrid: gaTileGrid.get(layer.resolutions,

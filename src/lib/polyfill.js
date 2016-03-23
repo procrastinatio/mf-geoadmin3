@@ -1,10 +1,11 @@
-/* For detailed credits and licence information see http://github.com/financial-times/polyfill-service.
+/* Initially created with the following command
+ *
+ * Base version: https://cdn.polyfill.io/v2/polyfill.js?features=requestAnimationFrame&ua=MSIE%209.0
  * 
- * UA detected: ie/9.0.0
- * Features requested: requestAnimationFrame
- * 
- * - performance.now, License: CC0 (required by "requestAnimationFrame")
- * - requestAnimationFrame, License: MIT */
+ * Adapted to support other browsers are well (Safari <= 5.1)
+ *
+ * Minified with closure
+*/
 
 (function(undefined) {
 
@@ -27,52 +28,55 @@ global.performance.now = function () {
 // requestAnimationFrame
 (function (global) {
 
-	if ('mozRequestAnimationFrame' in global) {
-		global.requestAnimationFrame = function (callback) {
-		    return mozRequestAnimationFrame(function () {
-		        callback(performance.now());
-		    });
-		};
-		global.cancelAnimationFrame = mozCancelAnimationFrame;
+  if (! ('requestAnimationFrame' in global)) {
+    
+    if ('mozRequestAnimationFrame' in global) {
+      global.requestAnimationFrame = function (callback) {
+          return mozRequestAnimationFrame(function () {
+              callback(performance.now());
+          });
+      };
+      global.cancelAnimationFrame = mozCancelAnimationFrame;
 
-	} else if ('webkitRequestAnimationFrame' in global) {
-		global.requestAnimationFrame = function (callback) {
-		    return webkitRequestAnimationFrame(function () {
-		        callback(performance.now());
-		    });
-		};
-		global.cancelAnimationFrame = webkitCancelAnimationFrame;
+    } else if ('webkitRequestAnimationFrame' in global) {
+      global.requestAnimationFrame = function (callback) {
+          return webkitRequestAnimationFrame(function () {
+              callback(performance.now());
+          });
+      };
+      global.cancelAnimationFrame = webkitCancelAnimationFrame;
 
-	} else {
+    } else {
 
-		var lastTime = Date.now();
+      var lastTime = Date.now();
 
-		global.requestAnimationFrame = function (callback) {
-			if (typeof callback !== 'function') {
-				throw new TypeError(callback + 'is not a function');
-			}
+      global.requestAnimationFrame = function (callback) {
+        if (typeof callback !== 'function') {
+          throw new TypeError(callback + 'is not a function');
+        }
 
-			var
-			currentTime = Date.now(),
-			delay = 16 + lastTime - currentTime;
+        var
+        currentTime = Date.now(),
+        delay = 16 + lastTime - currentTime;
 
-			if (delay < 0) {
-				delay = 0;
-			}
+        if (delay < 0) {
+          delay = 0;
+        }
 
-			lastTime = currentTime;
+        lastTime = currentTime;
 
-			return setTimeout(function () {
-				lastTime = Date.now();
+        return setTimeout(function () {
+          lastTime = Date.now();
 
-				callback(performance.now());
-			}, delay);
-		};
+          callback(performance.now());
+        }, delay);
+      };
 
-		global.cancelAnimationFrame = function (id) {
-			clearTimeout(id);
-		};
-	}
+      global.cancelAnimationFrame = function (id) {
+        clearTimeout(id);
+      };
+    }
+  }
 })(this);
 
 })

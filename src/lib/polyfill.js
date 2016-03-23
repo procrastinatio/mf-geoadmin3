@@ -29,6 +29,8 @@ global.performance.now = function () {
 (function (global) {
 
   if (! ('requestAnimationFrame' in global)) {
+
+    console.log('Applying polyfill for requestAnimation');
     
     if ('mozRequestAnimationFrame' in global) {
       global.requestAnimationFrame = function (callback) {

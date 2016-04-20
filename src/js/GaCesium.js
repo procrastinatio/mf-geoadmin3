@@ -113,6 +113,14 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     scene.fog.density = fogDensity;
     scene.fog.screenSpaceErrorFactor = fogSseFactor;
     enableOl3d(cesiumViewer, enabled);
+    var options = {
+        camera: cesiumViewer.getCesiumScene().camera,
+        canvas: cesiumViewer.getCesiumScene().canvas
+    };
+
+   cesiumViewer.getDataSources().add(Cesium.KmlDataSource.load(
+        'https://api3.geo.admin.ch/ogcproxy?url=' +
+        'https://dav0.bgdi.admin.ch/bazl_web/Active_Obstacles.kmz'), options);
     return cesiumViewer;
   };
 

@@ -77,8 +77,12 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     window.imageryAvailableLevels = arrayParam('imageryLevels', undefined);
 
     var cesiumViewer;
+    var sceneOptions = {
+      terrainExaggeration: 2.0
+    };
     try {
       cesiumViewer = new olcs.OLCesium({
+        sceneOptions: sceneOptions,
         map: map,
         createSynchronizers: function(map, scene) {
            return [

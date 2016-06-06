@@ -66,6 +66,7 @@ goog.require('ga_topic_service');
           var layersToQuery = {
             bodLayers: [],
             vectorLayers: [],
+            vectorTileLayers: [],
             wmsLayers: []
           };
           map.getLayers().forEach(function(l) {
@@ -73,8 +74,10 @@ goog.require('ga_topic_service');
               return;
             }
 
-            if (gaMapUtils.isVectorLayer(l)) {
+            if (gaMapUtils.isVectorTileLayer(l)) {
               layersToQuery.vectorLayers.push(l);
+            } else if (gaMapUtils.isVectorTileLayer(l)) {
+              layersToQuery.vectorTileLayers.push(l);
             } else if (gaLayers.hasTooltipBodLayer(l)) {
               layersToQuery.bodLayers.push(l);
             } else if (!gaLayers.isBodLayer(l) && gaMapUtils.isWMSLayer(l)) {
@@ -97,6 +100,10 @@ goog.require('ga_topic_service');
               geom instanceof ol.geom.GeometryCollection);
         };
 
+        var isTiledFeatureQueryable = function(feature) {
+          return feature && Object.keys(feature.getProperties()).length > 0;
+        };
+
         // Find the first feature from a vector layer
         var findVectorFeature = function(map, pixel, vectorLayer) {
           var featureFound;
@@ -105,7 +112,12 @@ goog.require('ga_topic_service');
             // onclick, geolocation circle is unselectable
             if (layer && !feature.getProperties().unselectable) {
               if (!vectorLayer || vectorLayer == layer) {
+<<<<<<< HEAD
                 if (!featureFound) {
+=======
+                if (!featureFound && (isFeatureQueryable(feature) ||
+                    isTiledFeatureQueryable(feature))) {
+>>>>>>> Add mvt test layer
                   featureFound = feature;
                 }
               }
@@ -415,11 +427,21 @@ goog.require('ga_topic_service');
               } else {
                 // Go through queryable vector layers
                 // Launch no requests.
-                layersToQuery.vectorLayers.forEach(function(layerToQuery) {
-                  var feature = findVectorFeature(map, pixel, layerToQuery);
+                layersToQuery.vectorLayers.forEach(function(olLayer) {
+                  var feature = findVectorFeature(map, pixel, olLayer);
                   if (feature) {
+                    showVectorFeature(feature, olLayer);
+                  }
+                });
+                layersToQuery.vectorTileLayers.forEach(function(olLayer) {
+                  var feature = findVectorFeature(map, pixel, olLayer);
+                  if (feature) {
+<<<<<<< HEAD
                     showVectorFeature(feature, layerToQuery);
                     all.push($q.when(1));
+=======
+                    showVectorTileFeature(feature, olLayer);
+>>>>>>> Add mvt test layer
                   }
                 });
               }
@@ -622,6 +644,50 @@ goog.require('ga_topic_service');
               // We leave the old code to not break existing clients
               // Once they have adapted to new implementation, we
               // can remove the code below
+              if (top != window) {
+               if (featureId && layerId) {
+                  window.parent.postMessage(id, '*');
+                }
+              }
+            };
+
+            var showVectorTileFeature = function(feature, layer) {
+              var row;
+              var rows = '';
+              var layerId = layer.id;
+              var properties = feature.getProperties();
+              var featureId = properties.id;
+              var id = layerId + '#' + featureId;
+              for (var k in properties) {
+                if (k !== 'geometry') {
+                  row = '<tr><td>{{key}}</td><td>{{value}}</td></tr>';
+                  row = row.
+                      replace('{{key}}', k).
+                      replace('{{value}}', properties[k]);
+                  rows += row;
+                }
+              }
+              rows = '<table>' + rows + '</table>';
+              var htmlpopup =
+                '<div id="{{id}}" class="htmlpopup-container">' +
+                  '<div class="htmlpopup-header">' +
+                    '<span>' + layer.id + ' &nbsp;</span>' +
+                    layer.id +
+                '</div>' +
+                '<div class="htmlpopup-content">' +
+                  rows +
+                '</div>' +
+              '</div>';
+              htmlpopup = htmlpopup.replace('{{id}}', id);
+              var featureCopy = new ol.Feature();
+              featureCopy.set('htmlpopup', htmlpopup);
+              featureCopy.set('layerId', layerId);
+              // Coordinates are in local tile system
+              // Geometries are probably cut as well
+              // We would need the tile extent and the pixel ratio to determine
+              // the real coordinates and provide a highlight
+              showFeatures([featureCopy]);
+              // Iframe communication from inside out
               if (top != window) {
                if (featureId && layerId) {
                   window.parent.postMessage(id, '*');

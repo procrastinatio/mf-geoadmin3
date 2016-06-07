@@ -1620,6 +1620,26 @@ describe('ga_map_service', function() {
         expect(gaLayerFilters.realtime(layer)).to.be(true);
       });
     });
+
+    describe('hasTooltipBodLayer', function() {
+      it('determines if a bod layer has a tooltip', function() {
+        expect(layers.hasTooltipBodLayer(undefined)).to.be(false);
+        expect(layers.hasTooltipBodLayer(null)).to.be(false);
+        expect(layers.hasTooltipBodLayer('')).to.be(false);
+
+        var layer = layers.getOlLayerById('tooltip');
+        expect(layers.hasTooltipBodLayer(layer)).to.be(true);
+        layer = layers.getOlLayerById('notooltip');
+        expect(layers.hasTooltipBodLayer(layer)).to.be(false);
+        layer = layers.getOlLayerById('childtooltip1');
+        expect(layers.hasTooltipBodLayer(layer)).to.be(true);
+        layer = layers.getOlLayerById('childnotooltip2');
+        expect(layers.hasTooltipBodLayer(layer)).to.be(false);
+
+        expect(layers.hasTooltipBodLayer(new ol.layer.Image())).to.be(false);
+        expect(layers.hasTooltipBodLayer(new ol.layer.Vector())).to.be(false);
+      });
+    });
   });
 
   describe('gaMapUtils', function() {

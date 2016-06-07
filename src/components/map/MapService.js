@@ -1383,6 +1383,8 @@ goog.require('ga_urlutils_service');
           if (angular.isString(olLayerOrId)) {
             return /^WMS\|\|/.test(olLayerOrId) &&
                 olLayerOrId.split('||').length >= 4;
+          } else {
+            return this.isWMSLayer(olLayerOrId);
           }
           return !!(olLayerOrId && !olLayerOrId.bodId &&
               this.isWMSLayer(olLayerOrId));

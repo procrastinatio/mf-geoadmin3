@@ -1,6 +1,5 @@
 describe('ga_importwms_directive', function() {
   var element, scope, map, httpBackend, $windowMock;
-
   beforeEach(function() {
 
     module(function($provide) {
@@ -18,30 +17,6 @@ describe('ga_importwms_directive', function() {
     inject(function($injector, $rootScope, $compile,
         $translate, $httpBackend, gaGlobalOptions) {
       $windowMock = sinon.mock($injector.get('$window'));
-      httpBackend = $httpBackend;
-      map = new ol.Map({});
-      map.setSize([600, 300]);
-      map.getView().fit([-20000000, -20000000, 20000000, 20000000], map.getSize());
-
-      element = angular.element(
-          '<div ga-import-wms ga-import-wms-map="map" ' +
-               'ga-import-wms-options="options">' +
-          '</div>');
-      scope = $rootScope.$new();
-      scope.map = map;
-      scope.options = {
-        defaultGetCapParams: 'SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.3.0',
-        defaultWMSList: [
-           'https://wms.geo.admin.ch/',
-           'http://ogc.heig-vd.ch/mapserver/wms?',
-           'http://www.wms.stadt-zuerich.ch/WMS-ZH-STZH-OGD/MapServer/WMSServer?',
-           'http://wms.geo.gl.ch/?',
-           'http://mapserver1.gr.ch/wms/admineinteilung?'
-        ]
-      };
-      $injector.get('$controller')('GaImportWmsDirectiveController', {'$scope': scope});
-      $injector.get('$controller')('GaImportWmsItemDirectiveController', {'$scope': scope});
-      $compile(element)(scope);
       var expectedUrl = 'https://example.com/all?lang=somelang';
       httpBackend.whenGET(expectedUrl).respond({});
       httpBackend.expectGET(expectedUrl);

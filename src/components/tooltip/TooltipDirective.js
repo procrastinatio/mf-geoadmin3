@@ -29,18 +29,16 @@ goog.require('ga_topic_service');
       function($timeout, $http, $q, $translate, $sce, gaPopup, gaLayers,
           gaBrowserSniffer, gaMapClick, gaDebounce, gaPreviewFeatures,
           gaMapUtils, gaTime, gaTopic, gaIdentify, gaGlobalOptions,
-          gaPermalink, gaIFrameCom, gaUrlUtils) {
+          gaPermalink, gaIFrameCom, gaUrlUtils, gaVectorTile) {
         var mouseEvts = '';
         if (!gaBrowserSniffer.mobile) {
           mouseEvts = 'ng-mouseenter="options.onMouseEnter($event,' +
               'options.htmls.length)" ' +
-              'ng-mouseleave="options.onMouseLeave($event)" ';
+              'ng-mouseleave="options.onMouseLeave($event, ' +
+              'options.htmls.length)" ';
         }
         var popupContent =
-          '<div ng-repeat="html in options.htmls" ' +
-               'ng-mouseenter="options.onMouseEnter($event,' +
-                   'options.htmls.length)" ' +
-               'ng-mouseleave="options.onMouseLeave($event)">' +
+          '<div ng-repeat="html in options.htmls" ' + mouseEvts + '>' +
             '<div ng-bind-html="html.snippet"></div>' +
             '<div ga-shop ' +
                  'ga-shop-map="::html.map" ' +
@@ -60,6 +58,7 @@ goog.require('ga_topic_service');
           var layersToQuery = {
             bodLayers: [],
             vectorLayers: [],
+            vectorTileLayers: [],
             wmsLayers: []
           };
           map.getLayers().forEach(function(l) {
@@ -67,7 +66,9 @@ goog.require('ga_topic_service');
               return;
             }
 
-            if (gaMapUtils.isVectorLayer(l)) {
+            if (gaMapUtils.isVectorTileLayer(l)) {
+              layersToQuery.vectorTileLayers.push(l);
+            } else if (gaMapUtils.isVectorLayer(l)) {
               layersToQuery.vectorLayers.push(l);
             } else if (gaLayers.hasTooltipBodLayer(l)) {
               layersToQuery.bodLayers.push(l);
@@ -78,6 +79,10 @@ goog.require('ga_topic_service');
           return layersToQuery;
         };
 
+        // Test if a tiled feature is queryable
+        var isTiledFeatureQueryable = function(feature) {
+          return feature && Object.keys(feature.getProperties()).length > 0;
+        };
         // Test if a feature is queryable.
         var isFeatureQueryable = function(feature) {
           return feature && feature.get('name') || feature.get('description');
@@ -352,6 +357,7 @@ goog.require('ga_topic_service');
 
               // When 3d is Active we use the cesium native function to get the
               // first queryable feature.
+              var all = []; // List of promises launched
               if (is3dActive()) {
                 var pickedObjects = scope.ol3d.getCesiumScene().
                     drillPick(position3d);
@@ -365,15 +371,22 @@ goog.require('ga_topic_service');
               } else {
                 // Go through queryable vector layers
                 // Launch no requests.
-                layersToQuery.vectorLayers.forEach(function(layerToQuery) {
-                  var feature = findVectorFeature(map, pixel, layerToQuery);
+                layersToQuery.vectorLayers.forEach(function(olLayer) {
+                  var feature = findVectorFeature(map, pixel, olLayer);
                   if (feature) {
-                    showVectorFeature(feature, layerToQuery);
+                    showVectorFeature(feature, olLayer);
+                  }
+                });
+                // One feature at a time
+                layersToQuery.vectorTileLayers.forEach(function(olLayer) {
+                  var feature = findVectorFeature(map, pixel, olLayer);
+                  gaVectorTile.unhighlightAllFeatures(olLayer);
+                  if (feature) {
+                    all.push(showVectorTileFeature(
+                        feature, olLayer, coordinate));
                   }
                 });
               }
-
-              var all = []; // List of promises launched
 
               // Go through all queryable bod layers.
               // Launch identify requests.
@@ -389,7 +402,8 @@ goog.require('ga_topic_service');
                 all.push(gaIdentify.get(map, [layerToQuery], geometry, tol,
                     returnGeometry, canceler.promise, limit, order).then(
                   function(response) {
-                    showFeatures(response.data.results, coordinate);
+                    showFeatures(response.data.results, coordinate, false,
+                        layerToQuery);
                     return response.data.results.length;
                 }));
               });
@@ -453,9 +467,40 @@ goog.require('ga_topic_service');
               }
             };
 
+            var getFeaturePopupHtml = function(bodId, featureId, coordinate) {
+              var mapSize = map.getSize();
+              var mapExtent = map.getView().calculateExtent(mapSize);
+              var htmlUrl = scope.options.htmlUrlTemplate
+                            .replace('{Topic}', gaTopic.get().id)
+                            .replace('{Layer}', bodId)
+                            .replace('{Feature}', featureId);
+              return $http.get(htmlUrl, {
+                timeout: canceler.promise,
+                params: {
+                  lang: $translate.use(),
+                  mapExtent: mapExtent.toString(),
+                  coord: (coordinate) ? coordinate.toString() : undefined,
+                  imageDisplay: mapSize.toString() + ',96'
+                }
+              });
+            };
+
+            var storeFeature = function(layerId, feature) {
+              if (!featuresByLayerId[layerId]) {
+                featuresByLayerId[layerId] = {};
+              }
+              // mvt layers ids are only accessible like this
+              var featureId = feature.getProperties().id;
+              if (!featureId) {
+                featureId = feature.getId();
+              }
+              featuresByLayerId[layerId][featureId] = feature;
+              return featuresByLayerId;
+            };
+
             // Highlight the features found
             var showFeatures = function(foundFeatures, coordinate,
-                nohighlight) {
+                nohighlight, layer) {
               if (foundFeatures && foundFeatures.length > 0) {
                 // Remove the tooltip, if a layer is removed, we don't care
                 // which layer. It worked like that in RE2.
@@ -469,9 +514,6 @@ goog.require('ga_topic_service');
                 angular.forEach(foundFeatures, function(value) {
                   if (value instanceof ol.Feature) {
                     var layerId = value.get('layerId');
-                    if (!featuresByLayerId[layerId]) {
-                      featuresByLayerId[layerId] = {};
-                    }
                     var feature = new ol.Feature(value.getGeometry());
                     feature.setId(value.getId());
                     feature.set('layerId', layerId);
@@ -480,11 +522,8 @@ goog.require('ga_topic_service');
                       showPopup(value.get('htmlpopup'), value);
                     }
                     // Store the ol feature for highlighting
-                    featuresByLayerId[layerId][feature.getId()] = feature;
+                    storeFeature(layerId, feature);
                   } else {
-                    if (!featuresByLayerId[value.layerBodId]) {
-                      featuresByLayerId[value.layerBodId] = {};
-                    }
                     //draw feature, but only if it should be drawn
                     if (!nohighlight &&
                         gaLayers.getLayer(value.layerBodId) &&
@@ -494,28 +533,13 @@ goog.require('ga_topic_service');
                       for (var i = 0, ii = features.length; i < ii; ++i) {
                         features[i].set('layerId', value.layerBodId);
                         gaPreviewFeatures.add(map, features[i]);
-
                         // Store the ol feature for highlighting
-                        featuresByLayerId[value.layerBodId][value.id] =
-                            features[i];
+                        storeFeature(value.layerBodId, features[i]);
                       }
                     }
-                    var mapSize = map.getSize();
-                    var mapExtent = map.getView().calculateExtent(mapSize);
-                    var htmlUrl = scope.options.htmlUrlTemplate
-                                  .replace('{Topic}', gaTopic.get().id)
-                                  .replace('{Layer}', value.layerBodId)
-                                  .replace('{Feature}', value.featureId);
-                    $http.get(htmlUrl, {
-                      timeout: canceler.promise,
-                      params: {
-                        lang: $translate.use(),
-                        mapExtent: mapExtent.toString(),
-                        coord: (coordinate) ? coordinate.toString() : undefined,
-                        imageDisplay: mapSize.toString() + ',96'
-                      }
-                    }).success(function(html) {
-                      showPopup(html, value);
+                    getFeaturePopupHtml(value.layerBodId, value.featureId,
+                        coordinate).then(function(response) {
+                      showPopup(response.data, value, layer);
                     });
                   }
                 });
@@ -571,6 +595,16 @@ goog.require('ga_topic_service');
               }
             };
 
+            var showVectorTileFeature = function(feature, olLayer, coordinate) {
+              gaVectorTile.highlightFeature(olLayer, feature, 'select');
+              return getFeaturePopupHtml(olLayer.bodId,
+                  feature.getProperties().id, coordinate).then(
+                  function(response) {
+                showPopup(response.data, feature, olLayer);
+                storeFeature(olLayer.bodId, feature);
+              });
+            };
+
             var showNoInfo = function() {
               if (!popup) {
                 popup = gaPopup.create({
@@ -587,8 +621,17 @@ goog.require('ga_topic_service');
               popup.open(3000); //Close after 3 seconds
             };
 
+            var getFeatureInTooltip = function(target) {
+              var containerId = target.find('.htmlpopup-container').attr('id');
+              if (/#/.test(containerId)) {
+                var split = containerId.split('#');
+                var feat = featuresByLayerId[split[0]][split[1]];
+                return feat;
+              }
+            };
+
             // Show the popup with all features informations
-            var showPopup = function(html, value) {
+            var showPopup = function(html, value, layer) {
               // Don't show popup when notooltip paramter is active
               if (gaPermalink.getParams().notooltip == 'true') {
                 return;
@@ -596,8 +639,7 @@ goog.require('ga_topic_service');
 
               // Show popup on first result
               if (htmls.length === 0) {
-
-                //always reposition element when newly opened
+                // Always reposition element when newly opened
                 var x;
                 if (!gaBrowserSniffer.mobile) {
                   x = function(element) {
@@ -609,31 +651,53 @@ goog.require('ga_topic_service');
                   popup = gaPopup.create({
                     className: 'ga-tooltip',
                     x: x,
-                    onCloseCallback: function() {
+                    onCloseCallback: function(evt, e) {
                       if (onCloseCB) {
                         onCloseCB();
                       }
                       onCloseCB = angular.noop;
                       gaPreviewFeatures.clear(map);
+                      // For vector tile we don't send identify requests
+                      // naturally the highlight in showVectorTileFeature
+                      // happens before the close callback is called
+                      if (evt.htmls.length > 0) {
+                        map.getLayers().forEach(function(l) {
+                          if (gaMapUtils.isVectorTileLayer(l)) {
+                            gaVectorTile.unhighlightAllFeatures(l);
+                          }
+                        });
+                      }
                       destroyPopup();
                     },
                     onMouseEnter: function(evt, nbTooltips) {
                       if (nbTooltips == 1) return;
                       var target = $(evt.currentTarget);
-                      var containerId = target.find('.htmlpopup-container').
-                          attr('id');
-                      if (/#/.test(containerId)) {
-                        var split = containerId.split('#');
-                        var feat = featuresByLayerId[split[0]][split[1]];
-                        if (feat.getGeometry()) {
-                          target.addClass('ga-active');
+                      var feat = getFeatureInTooltip(target);
+                      var olGeometry = feat.getGeometry();
+                      if (feat) {
+                        target.addClass('ga-active');
+                        // We are dealing with vector tiles
+                        if (olGeometry instanceof ol.render.Feature) {
+                          gaVectorTile.highlightFeature(layer, feat,
+                              'highlight');
+                        } else if (olGeometry) {
                           gaPreviewFeatures.highlight(map, feat);
                         }
                       }
                     },
-                    onMouseLeave: function(evt) {
-                      $(evt.currentTarget).removeClass('ga-active');
+                    onMouseLeave: function(evt, nbTooltips) {
+                      var target = $(evt.currentTarget);
+                      target.removeClass('ga-active');
                       gaPreviewFeatures.clearHighlight();
+                      if (nbTooltips == 1) return;
+                      var feat = getFeatureInTooltip(target);
+                      if (feat) {
+                        var olGeometry = feat.getGeometry();
+                        if (olGeometry instanceof ol.render.Feature) {
+                          gaVectorTile.highlightFeature(layer, feat,
+                          'select');
+                        }
+                      }
                     },
                     title: 'object_information',
                     content: popupContent,

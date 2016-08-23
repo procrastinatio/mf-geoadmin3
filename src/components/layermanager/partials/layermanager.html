@@ -2,7 +2,8 @@
   <li ng-repeat="layer in filteredLayers" class="ga-layer-folded"
       ng-class="{
         'ga-layer-time-enabled': layer.timeEnabled,
-        'ga-layer-warning': layer.useThirdPartyData
+        'ga-layer-warning': layer.useThirdPartyData,
+        'ga-layer-style-enabled': layer.styleEnabled
       }">
     <div class="ga-layer-infos">
       <button class="ga-icon ga-btn fa fa-remove-sign"
@@ -15,12 +16,21 @@
       <div class="ga-layer-time" ng-if="layer.timeEnabled">
         <button class="ga-btn badge" tabindex="1"
                 ng-class="isDefaultValue(layer.time)"
-                ng-click="displayTimestamps($event, layer)">{{layer.time | gaTimeLabel:layer}}
+                ng-click="displayChoices($event, layer)">{{layer.time | gaTimeLabel:layer}}
         </button>
         <select ng-if="mobile"
                 ng-model="layer.time"
                 ng-options="(i | gaTimeLabel:layer) for i in layer.timestamps">
           <option ng-if="layer.type == 'wms'" value="" translate>time_all</option>
+        </select>
+      </div>
+      <div class="ga-layer-style" ng-if="layer.styleEnabled">
+        <button class="ga-btn badge" tabindex="1"
+                ng-click="displayChoices($event, layer)">{{layer.styleLabel}}
+        </button>
+        <select ng-if="mobile"
+                ng-model="layer.styleUrl"
+                ng-options="(i | gaStyleLabel:layer) for i in layer.styleUrls">
         </select>
       </div>
       <button class="ga-icon ga-btn fa fa-user"

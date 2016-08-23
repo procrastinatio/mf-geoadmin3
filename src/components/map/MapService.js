@@ -2,16 +2,16 @@ goog.provide('ga_map_service');
 
 goog.require('ga_measure_service');
 goog.require('ga_networkstatus_service');
-goog.require('ga_stylesfromliterals_service');
 goog.require('ga_time_service');
 goog.require('ga_urlutils_service');
+goog.require('ga_vectortile_service');
 
 (function() {
 
   var module = angular.module('ga_map_service', [
     'ga_networkstatus_service',
     'ga_storage_service',
-    'ga_stylesfromliterals_service',
+    'ga_vectortile_service',
     'ga_time_service',
     'ga_urlutils_service',
     'pascalprecht.translate'
@@ -30,6 +30,12 @@ goog.require('ga_urlutils_service');
           tileSize: 512,
           origin: origin,
           resolutions: resolutions
+        });
+      } else if (type == 'mvt') {
+        return new ol.tilegrid.TileGrid({
+          origin: origin,
+          extent: [420000, 30000, 900000, 350000],
+          resolutions: resolutions.slice(0, 24)
         });
       }
       return new ol.tilegrid.WMTS({
@@ -166,6 +172,22 @@ goog.require('ga_urlutils_service');
               this.set('timeEnabled', val);
             }
           },
+          styleEnabled: {
+            get: function() {
+              return (this.styleUrls && this.styleUrls.length > 1);
+            },
+            set: function(val) {
+              return;
+            }
+          },
+          styleLabel: {
+            get: function() {
+              return this.styleLabels[this.styleUrls.indexOf(this.styleUrl)];
+            },
+            set: function(val) {
+              return;
+            }
+          },
           timestamps: {
             get: function() {
               return this.get('timestamps');
@@ -243,6 +265,22 @@ goog.require('ga_urlutils_service');
             value: false
           },
           geojsonUrl: {
+            writable: true,
+            value: null
+          },
+          styleUrls: {
+            writable: true,
+            value: null
+          },
+          styleLabels: {
+            writable: true,
+            value: null
+          },
+          styleUrl: {
+            writable: true,
+            value: null
+          },
+          defaultVectorStyleFunction: {
             writable: true,
             value: null
           },
@@ -379,7 +417,7 @@ goog.require('ga_urlutils_service');
     this.$get = function($http, $q, $rootScope, $translate, $window,
         gaBrowserSniffer, gaDefinePropertiesForLayer, gaMapUtils,
         gaNetworkStatus, gaStorage, gaTileGrid, gaUrlUtils,
-        gaStylesFromLiterals, gaGlobalOptions, gaPermalink, 
+        gaStyleJson, gaVectorTile, gaGlobalOptions, gaPermalink,
         gaLang, gaTime) {
 
       var Layers = function(dfltWmsSubdomains,
@@ -415,6 +453,16 @@ goog.require('ga_urlutils_service');
             urls.push(tpl.replace('{s}', subdomain));
           });
           return urls;
+        };
+
+        var setLayerStyleFromUrl = function(styleUrl, olLayer) {
+          var styleJson = new gaStyleJson();
+          styleJson.get(styleUrl).then(function(olStyleForVector) {
+            olLayer.setStyle(function(feature, resolution) {
+              return [olStyleForVector.getFeatureStyle(
+                  feature, resolution)];
+            });
+          });
         };
 
         var getWmtsGetTileTpl = function(layer, time, tileMatrixSet,
@@ -530,6 +578,73 @@ goog.require('ga_urlutils_service');
                 attributionUrl: 'https://www.swisstopo.admin.ch/' + lang +
                     '/home.html'
               };
+              var baseStyleUrl = '//mf-chsdi3.dev.bgdi.ch/ltgal/static/' +
+                  'vectorStyles/';
+              // TODO Remove me and put that into the DB.
+              response.data['ch.swisstopo.' +
+                  'swissboundaries3d-kanton-flaeche.fill'] = {
+                type: 'mvt',
+                selectbyrectangle: false,
+                tooltip: true,
+                highlightable: false,
+                background: false,
+                searchable: false,
+                serverLayerName: 'ch.swisstopo.' +
+                    'swissboundaries3d-kanton-flaeche.fill',
+                attributionUrl: 'http://www.swisstopo.admin.ch/internet/' +
+                    'swisstopo/fr/home.html',
+                label: 'Limites cantonales',
+                timestamps: ['current'],
+                hasLegend: true,
+                styleUrls: [
+                    baseStyleUrl +
+                    'ch.swisstopo.swissboundaries3d-kanton-flaeche.fill.json',
+                    baseStyleUrl +
+                    'ch.swisstopo.swissboundaries3d-kanton-flaeche.fill_0.json',
+                    baseStyleUrl +
+                    'ch.swisstopo.swissboundaries3d-kanton-flaeche.fill_1.json'
+                ],
+                styleLabels: [
+                    'Default',
+                    'Cantons',
+                    'Area'
+                ],
+                timeEnabled: false
+              };
+              //response.data['ch.swisstopo.' +
+              //    'swissboundaries3d-berzik-flaeche.fill'] = {
+              //  type: 'mvt',
+              //  selectbyrectangle: false,
+              //  tooltip: true,
+              //  highlightable: false,
+              //  background: false,
+              //  searchable: false,
+              //  serverLayerName: 'ch.swisstopo.' +
+              //      'swissboundaries3d-berzik-flaeche.fill',
+              //  attributionUrl: 'http://www.swisstopo.admin.ch/internet/' +
+              //      'swisstopo/fr/home.html',
+              //  label: 'Limites de district',
+              //  timestamps: ['current'],
+              //  hasLegend: true,
+              //  timeEnabled: false
+              //};
+              //response.data['ch.swisstopo.' +
+              //    'swissboundaries3d-gemeinde-flaeche.fill'] = {
+              //  type: 'mvt',
+              //  selectbyrectangle: false,
+              //  tooltip: true,
+              //  highlightable: false,
+              //  background: false,
+              //  searchable: false,
+              //  serverLayerName: 'ch.swisstopo.' +
+              //      'swissboundaries3d-gemeinde-flaeche.fill',
+              //  attributionUrl: 'http://www.swisstopo.admin.ch/internet/' +
+              //      'swisstopo/fr/home.html',
+              //  label: 'Limites de commune',
+              //  timestamps: ['current'],
+              //  hasLegend: true,
+              //  timeEnabled: false
+              //};
             }
             if (!layers) { // First load
               layers = response.data;
@@ -824,21 +939,34 @@ goog.require('ga_urlutils_service');
                 );
               });
             };
-
-            // IE doesn't understand agnostic URLs
-            $http.get(location.protocol + layer.styleUrl, {
-              cache: true
-            }).then(function(response) {
-              var olStyleForVector = gaStylesFromLiterals(response.data);
-              olLayer.setStyle(function(feature, resolution) {
-                return [olStyleForVector.getFeatureStyle(
-                    feature, resolution)];
-              });
-            });
-            // TODO: Handle error
-
+            if (layer.styleUrl) {
+              setLayerStyleFromUrl(layer.styleUrl, olLayer);
+            }
             if (!layer.updateDelay) {
               setLayerSource();
+            }
+          } else if (layer.type == 'mvt') {
+            var url = 'https://vectortiles.dev.bgdi.ch/2.1.0/' +
+                '{layerBodId}/21781/default/current/{z}/{x}/{y}.pbf';
+            url = url.replace('{layerBodId}', layer.serverLayerName);
+            olSource = new ol.source.VectorTile({
+              format: new ol.format.MVT(),
+              tileGrid: gaTileGrid.get(layer.resolutions,
+                  layer.minResolution, 'mvt'),
+              tilePixelRatio: 16,
+              url: url
+            });
+            // no support for label within polygons and lines
+            // when dealing with mvt
+            olLayer = new ol.layer.VectorTile({
+              minResolution: layer.minResolution,
+              maxResolution: layer.maxResolution,
+              renderMode: 'hybrid', // vector or image
+              source: olSource
+            });
+            if (layer.styleUrls) {
+              // always take first style per default
+              gaVectorTile.setLayerJsonStyle(olLayer, layer.styleUrls[0]);
             }
           }
           if (angular.isDefined(olLayer)) {
@@ -850,6 +978,11 @@ goog.require('ga_urlutils_service');
             olLayer.timestamps = layer.timestamps;
             olLayer.geojsonUrl = layer.geojsonUrl;
             olLayer.updateDelay = layer.updateDelay;
+            olLayer.styleUrls = layer.styleUrls;
+            olLayer.styleLabels = layer.styleLabels;
+            if (olLayer.styleEnabled) {
+              olLayer.styleUrl = layer.styleUrls[0];
+            }
             var that = this;
             olLayer.getCesiumImageryProvider = function() {
               return that.getCesiumImageryProviderById(bodId);
@@ -1390,6 +1523,18 @@ goog.require('ga_urlutils_service');
             });
             return sourceExtent;
           }
+        },
+
+       /**
+        * Tests if a layer is a tiled vector layer.
+        * @param {ol.layer.Base} an ol layer.
+        *
+        * Returns true if the layer is a VectorTile
+        * Returns false if the layer is a VectorTile
+        */
+        isVectorTileLayer: function(olLayer) {
+          return !!(olLayer && !(olLayer instanceof ol.layer.Group) &&
+              olLayer.getSource() && olLayer instanceof ol.layer.VectorTile);
         },
 
         /**

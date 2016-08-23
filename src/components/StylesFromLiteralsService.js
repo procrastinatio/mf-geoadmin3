@@ -86,6 +86,7 @@ goog.provide('ga_stylesfromliterals_service');
       }
 
       function getGeomTypeFromGeometry(olGeometry) {
+        // ol.render.Feature is returned for mvt tiles
         if (olGeometry instanceof ol.geom.Point ||
             olGeometry instanceof ol.geom.MultiPoint) {
           return 'point';
@@ -95,6 +96,11 @@ goog.provide('ga_stylesfromliterals_service');
         } else if (olGeometry instanceof ol.geom.Polygon ||
             olGeometry instanceof ol.geom.MultiPolygon) {
           return 'polygon';
+        } else if (olGeometry instanceof ol.render.Feature) {
+          var geomType = olGeometry.getType();
+          var reg = new RegExp('[a-zA-Z]*(Line|Polygon|Point)[a-zA-Z]*');
+          var matches = reg.exec(geomType);
+          return matches[1].toLowerCase();
         }
       }
 
@@ -189,23 +195,25 @@ goog.provide('ga_stylesfromliterals_service');
           if (value >= parseFloat(range[0]) &&
               value < parseFloat(range[1])) {
             olStyle = this.styles[geomType][range];
-            break;
+            return olStyle;
           }
         }
-        return olStyle;
       };
 
       olStyleForPropertyValue.prototype.getOlStyleForResolution_ = function(
           olStyles, resolution) {
         var i, ii, olStyle;
+        // allow user not to provide resolution
+        if (olStyles.length === 1 && resolution === undefined) {
+          return olStyles[0];
+        }
         for (i = 0, ii = olStyles.length; i < ii; i++) {
           olStyle = olStyles[i];
           if (olStyle.minResolution <= resolution &&
               olStyle.maxResolution > resolution) {
-            break;
+            return olStyle;
           }
         }
-        return olStyle;
       };
 
       olStyleForPropertyValue.prototype.getFeatureStyle = function(feature,
@@ -227,24 +235,30 @@ goog.provide('ga_stylesfromliterals_service');
           var geomType = getGeomTypeFromGeometry(feature.getGeometry());
           var olStyles = this.styles[geomType][value];
           var res = this.getOlStyleForResolution_(olStyles, resolution);
-          var labelProperty = res.labelProperty;
-          if (labelProperty) {
-            var text = properties[labelProperty];
-            res.olStyle.getText().setText(text);
+          if (res) {
+            if (res.labelProperty) {
+              var text = properties[res.labelProperty];
+              res.olStyle.getText().setText(text);
+            }
+            return res.olStyle;
           }
-          return res.olStyle;
+          // where null is enough for regular vector layers
+          // one needs to return an empty style for mvt layers.
+          return new ol.style.Style();
         } else if (this.type === 'range') {
           var properties = feature.getProperties();
           var value = properties[this.key];
           var geomType = getGeomTypeFromGeometry(feature.getGeometry());
           var olStyles = this.findOlStyleInRange_(value, geomType);
           var res = this.getOlStyleForResolution_(olStyles, resolution);
-          var labelProperty = res.labelProperty;
-          if (labelProperty) {
-            var text = properties[labelProperty];
-            res.olStyle.getText().setText(text);
+          if (res) {
+            if (res.labelProperty) {
+              var text = properties[res.labelProperty];
+              res.olStyle.getText().setText(text);
+            }
+            return res.olStyle;
           }
-          return res.olStyle;
+          return ol.style.Style();
         }
       };
 

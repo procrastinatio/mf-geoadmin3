@@ -48,6 +48,7 @@ goog.require('ga_seo_controller');
 goog.require('ga_share');
 goog.require('ga_share_controller');
 goog.require('ga_shop');
+goog.require('ga_stylejson_service');
 goog.require('ga_stylesfromliterals_service');
 goog.require('ga_swipe');
 goog.require('ga_tilt3d');
@@ -59,6 +60,7 @@ goog.require('ga_tooltip_controller');
 goog.require('ga_topic');
 goog.require('ga_translation');
 goog.require('ga_translation_controller');
+goog.require('ga_vectortile_service');
 goog.require('ga_waitcursor_service');
 (function() {
 
@@ -93,6 +95,8 @@ goog.require('ga_waitcursor_service');
     'ga_fullscreen',
     'ga_waitcursor_service',
     'ga_stylesfromliterals_service',
+    'ga_stylejson_service',
+    'ga_vectortile_service',
     'ga_seo',
     'ga_draw',
     'ga_query',

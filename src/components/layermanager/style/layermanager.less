@@ -32,7 +32,7 @@
     width: 5.5em;
     padding: 0;
   }
- 
+
   .ga-layer-infos label, input, select, options {
     cursor: pointer;
 
@@ -59,13 +59,13 @@
     padding: 0px;
     height: 14px;
     vertical-align: middle;
- 
+
     &::-ms-track {
       height: 4px;
       color: transparent;
       background: linear-gradient(to right, rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%);
     }
- 
+
     &::-ms-fill-lower, &::-ms-fill-upper {
       background: none;
     }
@@ -75,9 +75,9 @@
       border-radius: 5px;
       height: 12px;
       background: linear-gradient(to bottom, #eeeeee 0%,#cccccc 100%);
-    } 
+    }
   }
- 
+
   .ga-layer-infos {
     width: 100%;
     z-index: 1;
@@ -100,7 +100,7 @@
       }
     }
 
-    .ga-layer-time {
+    .ga-layer-time, .ga-layer-style {
       position: absolute;
       width: 4em;
       height: 1.7em;
@@ -124,7 +124,7 @@
         opacity: 0;
       }
     }
-    
+
     .fa-user {
       display: none;
       color: red;
@@ -136,7 +136,7 @@
       display: block;
       right: 34px;
     }
-    
+
     .ga-layer-infos label {
       padding-right: 5.1em;
     }
@@ -164,13 +164,13 @@
       }
     }
   }
- 
+
   .ga-layer-tools, .ga-layer-infos {
     height: 3em;
   }
 
   .ga-layer-time-enabled .ga-layer-tools {
- 
+
     @media (max-width: 335px) {
       label > div {
         font-size: 0.8em;
@@ -229,9 +229,23 @@
 /* The popover is outside the layermanager */
 .ga-layer-timestamps {
   width: 200px;
- 
+
   & div {
     width: 50px;
+  }
+}
+
+.ga-layer-styles {
+  width: 210px;
+
+  & div {
+    width: 70px;
+  }
+}
+
+.ga-layer-timestamps, .ga-layer-styles {
+
+  & div {
     height: 20px;
     display: inline-block;
     border: 1px solid rgba(0, 0, 0, 0);
@@ -246,16 +260,16 @@
   }
 }
 
-.ga-layer-timestamps .badge, [ga-layermanager] .badge {
+.ga-layer-timestamps .badge, .ga-layer-styles .badge, [ga-layermanager] .badge {
   background-color: #D3D3D3;
   border: 0;
   font-size: inherit;
   font-weight: normal;
- 
+
   &, &.ga-black, &.ga-black:hover {
     color: #000;
   }
- 
+
   &:not(.ga-black), &:not(.ga-black):hover {
     color: #f00;
   }

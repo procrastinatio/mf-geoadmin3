@@ -45,10 +45,17 @@ goog.require('ga_urlutils_service');
     }
   });
 
+  module.filter('gaStyleLabel', function($translate) {
+    return function(input, layer) {
+      var idx = layer.styleUrls.indexOf(input);
+      return layer.styleLabels[idx];
+    }
+  });
+
   module.directive('gaLayermanager', function($compile, $document, $timeout,
       $rootScope, $translate, $window, gaBrowserSniffer, gaLayerFilters,
       gaLayerMetadataPopup, gaLayers, gaAttribution, gaUrlUtils,
-      gaMapUtils) {
+      gaMapUtils, gaVectorTile) {
 
     // Timestamps list template
     var tpl =
@@ -57,17 +64,25 @@ goog.require('ga_urlutils_service');
              'ng-class="{badge: !tmpLayer.time}" ' +
              'ng-click="setLayerTime(tmpLayer)" ' +
              'translate>time_all</div> ' +
-        '<div tabindex="1" ng-repeat="i in tmpLayer.timestamps" ' +
+        '<div tabindex="1" ng-if="!tmpLayer.styleEnabled"' +
+             'ng-repeat="i in tmpLayer.timestamps" ' +
              'ng-class="{badge: (tmpLayer.time == i)}" ' +
              'ng-click="setLayerTime(tmpLayer, i)">' +
           '{{i | gaTimeLabel:tmpLayer}}' +
+        '</div>' +
+      '</div>' +
+      '<div class="ga-layer-styles">' +
+        '<div tabindex="1" ng-repeat="i in tmpLayer.styleUrls" ' +
+             'ng-class="{badge: (tmpLayer.styleUrl == i)}" ' +
+             'ng-click="setLayerStyle(tmpLayer, i)">' +
+          '{{i | gaStyleLabel:tmpLayer}}' +
         '</div>' +
       '</div>';
 
     // Create the popover
     var popover, content, container, callback, closeBt;
     var win = $($window);
-    var createPopover = function(target, element, scope) {
+    var createPopover = function(target, element, scope, styleUrl) {
 
       // Lazy load
       if (!container) {
@@ -81,6 +96,8 @@ goog.require('ga_urlutils_service');
         });
       }
 
+      var title = styleUrl ? $translate.instant('select_style') :
+          $translate.instant('time_select_year');
       popover = $(target).popover({
         container: container,
         content: content,
@@ -88,7 +105,7 @@ goog.require('ga_urlutils_service');
         placement: function() {
           return (win.width() < 640) ? 'left' : 'right';
         },
-        title: $translate.instant('time_select_year'),
+        title: title,
         trigger: 'manual'
       });
       popover.addClass('ga-layer-timestamps-popover');
@@ -218,7 +235,7 @@ goog.require('ga_urlutils_service');
         // On mobile we use a classic select box, on desktop a popover
         if (!scope.mobile) {
           // Simulate a select box with a popover
-          scope.displayTimestamps = function(evt, layer) {
+          scope.displayChoices = function(evt, layer) {
             if (popover && popover[0] === evt.target) {
               destroyPopover(evt.target, element);
             } else {
@@ -226,7 +243,7 @@ goog.require('ga_urlutils_service');
               scope.tmpLayer = layer;
               // We use timeout otherwise the popover is bad centered.
               $timeout(function() {
-                createPopover(evt.target, element, scope);
+                createPopover(evt.target, element, scope, layer.styleUrl);
               }, 100, false);
             }
             evt.preventDefault();
@@ -247,6 +264,7 @@ goog.require('ga_urlutils_service');
         scope.duplicateLayer = function(evt, layer) {
           var dupLayer = gaLayers.getOlLayerById(layer.bodId);
           dupLayer.time = layer.time;
+          dupLayer.styleUrl = layer.styleUrl;
           dupLayer.id = layer.id + '_' + dupId++;
           var index = scope.layers.indexOf(layer);
           map.getLayers().insertAt(index, dupLayer);
@@ -297,6 +315,11 @@ goog.require('ga_urlutils_service');
 
         scope.setLayerTime = function(layer, time) {
           layer.time = time;
+          destroyPopover(null, element);
+        };
+
+        scope.setLayerStyle = function(layer, style) {
+          gaVectorTile.setLayerJsonStyle(layer, style);
           destroyPopover(null, element);
         };
 

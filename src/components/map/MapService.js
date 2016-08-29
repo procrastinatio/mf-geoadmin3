@@ -578,7 +578,7 @@ goog.require('ga_vectortile_service');
                 attributionUrl: 'https://www.swisstopo.admin.ch/' + lang +
                     '/home.html'
               };
-              var baseStyleUrl = '//mf-chsdi3.dev.bgdi.ch/ltgal/static/' +
+              var baseStyleUrl = '//mf-chsdi3.dev.bgdi.ch/gal_mapbox/static/' +
                   'vectorStyles/';
               // TODO Remove me and put that into the DB.
               response.data['ch.swisstopo.' +

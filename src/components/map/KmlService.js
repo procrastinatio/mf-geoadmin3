@@ -290,6 +290,11 @@ goog.require('ga_urlutils_service');
             gaDefinePropertiesForLayer(olLayer);
             olLayer.useThirdPartyData = true;
 
+            // Set ol3cesium proxy if necessary
+            if (gaUrlUtils.olLayer.url != gaUrlUtils.proxifyUrl(olLayer.url)) {
+              olLayer.getSource().set('olcs.proxy',
+                  gaGlobalOptions.ogcproxyUrl);
+            }
             return olLayer;
           });
         };

@@ -226,6 +226,14 @@ goog.require('ga_urlutils_service');
               this.set('getCesiumImageryProvider', val);
             }
           },
+          getCesiumDataSource: {
+            get: function() {
+              return this.get('getCesiumDataSource') || angular.noop;
+            },
+            set: function(val) {
+              this.set('getCesiumDataSource', val);
+            }
+          },
           altitudeMode: {
             get: function() {
               return this.get('altitudeMode');
@@ -562,6 +570,13 @@ goog.require('ga_urlutils_service');
                     '/home.html'
               };
 
+              // Luftfahrthindernis
+              response.data['ch.bazl.luftfahrthindernis'].config3d = 'ch.bazl.luftfahrthindernis.3d';
+              response.data['ch.bazl.luftfahrthindernis.3d'] = {
+                type: 'kml',
+                url: 'https://dav0.bgdi.admin.ch/bazl_web/bern/Active_Obstacles_18.04.2016.bern.kml'
+              };
+
               // 3D Tileset
               var tileset3d = [
                 'ch.swisstopo.swisstlm3d.3d',
@@ -759,6 +774,26 @@ goog.require('ga_urlutils_service');
           return provider;
         };
 
+        /**
+         * Returns a promise of Cesium DataSource.
+         */
+        this.getCesiumDataSourceById = function(bodId, scene) {
+          var config = layers[bodId];
+          bodId = config.config3d;
+          var config3d = this.getConfig3d(config);
+          if (config3d && config3d.type == 'kml') {
+            var url = config3d.url;
+            var proxy = new Cesium.DefaultProxy(gaGlobalOptions.ogcproxyUrl);
+
+
+            var dsP = Cesium.KmlDataSource.load(url, {
+              camera: scene.camera,
+              canvas: scene.canvas,
+              proxy: proxy
+            });
+            return dsP;
+          }
+        };
 
         /**
          * Return an ol.layer.Layer object for a layer id.
@@ -930,6 +965,9 @@ goog.require('ga_urlutils_service');
             var that = this;
             olLayer.getCesiumImageryProvider = function() {
               return that.getCesiumImageryProviderById(bodId);
+            };
+            olLayer.getCesiumDataSource = function(scene) {
+              return that.getCesiumDataSourceById(bodId, scene);
             };
           }
 

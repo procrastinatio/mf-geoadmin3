@@ -29,24 +29,57 @@ goog.inherits(olcs.GaKmlSynchronizer, olcs.AbstractSynchronizer);
  */
 olcs.GaKmlSynchronizer.prototype.createSingleLayerCounterparts =
     function(olLayer) {
-  if (olLayer.get('type') === 'KML' && olLayer.get('url') &&
-      !/:\/\/public\./.test(olLayer.get('url'))) {
-    var options = {
+
+  var dsP;
+  var factory = olcs.obj(olLayer)['getCesiumDataSource'];
+  
+  if (factory) {
+    dsP = factory(this.scene);
+    if (!dsP) {
+      return null;
+    }
+  } else {
+    var url = olLayer.get('url');
+    if (olLayer.get('type') != 'KML' || !url || /:\/\/public\./.test(url)) {
+      return null;
+    }
+    var proxy = olLayer.getSource().get('olcs.proxy');
+    proxy = (proxy) ? new Cesium.DefaultProxy(proxy): null;
+
+    dsP = Cesium.KmlDataSource.load(url, {
       camera: this.scene.camera,
       canvas: this.scene.canvas,
-      proxy: new Cesium.DefaultProxy('https://api3.geo.admin.ch/ogcproxy?url=')
-    };
-    var url = '' + olLayer.get('url');
-    this.dataSources_.add(Cesium.KmlDataSource.load(url, options));
+      proxy: proxy
+    });
   }
-  return null;
+  
+  dsP.then(function(ds) {
+    ds.show = olLayer.getVisible();
+    olLayer.on('change:visible', function(evt) {
+      ds.show = evt.target.getVisible();
+    });
+  });
+
+  return [dsP];
 };
+
 
 /**
  * @inheritDoc
  */
-olcs.GaKmlSynchronizer.prototype.destroyCesiumObject = function(object) {
-  //this.dataSourcesobject.getRootPrimitive().destroy();
+olcs.GaKmlSynchronizer.prototype.addCesiumObject = function(dsP) {
+  this.dataSources_.add(dsP);
+};
+
+
+/**
+ * @inheritDoc
+ */
+olcs.GaKmlSynchronizer.prototype.destroyCesiumObject = function(dsP) {
+  var that = this;
+  dsP.then(function(ds) {
+    that.dataSources_.remove(ds, true);
+  });
 };
 
 
@@ -54,11 +87,11 @@ olcs.GaKmlSynchronizer.prototype.destroyCesiumObject = function(object) {
  * @inheritDoc
  */
 olcs.GaKmlSynchronizer.prototype.removeSingleCesiumObject =
-    function(object, destroy) {
-  //object.destroy();
-  //this.csAllPrimitives_.destroyPrimitives = destroy;
-  //this.csAllPrimitives_.remove(object.getRootPrimitive());
-  //this.csAllPrimitives_.destroyPrimitives = false;
+    function(dsP, destroy) {
+  var that = this;
+  dsP.then(function(ds) {
+    that.dataSources_.remove(ds, destroy);
+  });
 };
 
 
@@ -66,13 +99,6 @@ olcs.GaKmlSynchronizer.prototype.removeSingleCesiumObject =
  * @inheritDoc
  */
 olcs.GaKmlSynchronizer.prototype.removeAllCesiumObjects = function(destroy) {
-  //this.csAllPrimitives_.destroyPrimitives = destroy;
-  //if (destroy) {
-  //  for (var i = 0; i < this.csAllPrimitives_.length; ++i) {
-  //    this.csAllPrimitives_.get(i)['counterpart'].destroy();
-  //  }
-  //}
-  //this.csAllPrimitives_.removeAll();
-  //this.csAllPrimitives_.destroyPrimitives = false;
+  this.dataSources_.removeAll(destroy);
 };
 

@@ -672,9 +672,9 @@ goog.require('ga_urlutils_service');
             tileset = new Cesium.Cesium3DTileset({
               url: getTileset3DUrl(requestedLayer, timestamp),
               //debugShowStatistics: true,
-              maximumNumberOfLoadedTiles: 3
-              , dynamicScreenSpaceError: true
-, distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0,
+              maximumNumberOfLoadedTiles: 3,
+              dynamicScreenSpaceError: true,
+              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0,
                   50000)//en meters
             });
             tileset.bodId = bodId;

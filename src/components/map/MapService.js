@@ -571,10 +571,12 @@ goog.require('ga_urlutils_service');
               };
 
               // Luftfahrthindernis
-              response.data['ch.bazl.luftfahrthindernis'].config3d = 'ch.bazl.luftfahrthindernis.3d';
+              response.data['ch.bazl.luftfahrthindernis'].config3d =
+                  'ch.bazl.luftfahrthindernis.3d';
               response.data['ch.bazl.luftfahrthindernis.3d'] = {
                 type: 'kml',
-                url: 'https://dav0.bgdi.admin.ch/bazl_web/bern/Active_Obstacles_18.04.2016.bern.kml'
+                url: 'https://dav0.bgdi.admin.ch/bazl_web/bern/' +
+                    'Active_Obstacles_18.04.2016.bern.kml'
               };
 
               // 3D Tileset
@@ -671,6 +673,9 @@ goog.require('ga_urlutils_service');
               url: getTileset3DUrl(requestedLayer, timestamp),
               //debugShowStatistics: true,
               maximumNumberOfLoadedTiles: 3
+              , dynamicScreenSpaceError: true
+, distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0,
+                  50000)//en meters
             });
             tileset.bodId = bodId;
           }

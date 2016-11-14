@@ -571,13 +571,15 @@ goog.require('ga_urlutils_service');
               };
 
               // Luftfahrthindernis
-              response.data['ch.bazl.luftfahrthindernis'].config3d =
-                  'ch.bazl.luftfahrthindernis.3d';
-              response.data['ch.bazl.luftfahrthindernis.3d'] = {
-                type: 'kml',
-                url: 'https://dav0.bgdi.admin.ch/bazl_web/bern/' +
-                    'Active_Obstacles_18.04.2016.bern.kml'
-              };
+              if (response.data['ch.bazl.luftfahrthindernis']) {
+                response.data['ch.bazl.luftfahrthindernis'].config3d =
+                    'ch.bazl.luftfahrthindernis.3d';
+                response.data['ch.bazl.luftfahrthindernis.3d'] = {
+                  type: 'kml',
+                  url: 'https://dav0.bgdi.admin.ch/bazl_web/bern/' +
+                      'Active_Obstacles_18.04.2016.bern.kml'
+                };
+              }
 
               // 3D Tileset
               var tileset3d = [

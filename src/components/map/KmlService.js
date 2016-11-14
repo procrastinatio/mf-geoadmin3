@@ -291,7 +291,8 @@ goog.require('ga_urlutils_service');
             olLayer.useThirdPartyData = true;
 
             // Set ol3cesium proxy if necessary
-            if (gaUrlUtils.olLayer.url != gaUrlUtils.proxifyUrl(olLayer.url)) {
+            if (olLayer.url &&
+                olLayer.url != gaUrlUtils.proxifyUrl(olLayer.url)) {
               olLayer.getSource().set('olcs.proxy',
                   gaGlobalOptions.ogcproxyUrl);
             }

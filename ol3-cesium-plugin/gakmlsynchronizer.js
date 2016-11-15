@@ -35,22 +35,24 @@ olcs.GaKmlSynchronizer.prototype.createSingleLayerCounterparts =
   
   if (factory) {
     dsP = factory(this.scene);
-    if (!dsP) {
-      return null;
-    }
-  } else {
+  }
+
+  if (!dsP) {
     var url = olLayer.get('url');
+    
     if (!(olLayer instanceof ol.layer.Layer) || olLayer.get('type') != 'KML'
         || !url || /:\/\/public\./.test(url)) {
       return null;
     }
-    var proxy = '' + olLayer.getSource().get('olcs.proxy');
-    proxy = (proxy) ? new Cesium.DefaultProxy(proxy): null;
+    
+    var proxy = olLayer.getSource().get('olcs.proxy');
+    proxy = (proxy) ? new Cesium.DefaultProxy('' + proxy): null;
 
     dsP = Cesium.KmlDataSource.load('' + url, {
       camera: this.scene.camera,
       canvas: this.scene.canvas,
-      proxy: proxy
+      proxy: proxy,
+      clampToGround: true
     });
   }
   

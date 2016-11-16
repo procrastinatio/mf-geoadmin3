@@ -38,20 +38,25 @@ olcs.GaKmlSynchronizer.prototype.createSingleLayerCounterparts =
   }
 
   if (!dsP) {
-    var url = olLayer.get('url');
+    /** @type {string} */
+    var url = olcs.obj(olLayer)['url'];
     
     if (!(olLayer instanceof ol.layer.Layer) || olLayer.get('type') != 'KML'
         || !url || /:\/\/public\./.test(url)) {
       return null;
     }
-    
-    var proxy = olLayer.getSource().get('olcs.proxy');
-    proxy = (proxy) ? new Cesium.DefaultProxy('' + proxy): null;
 
-    dsP = Cesium.KmlDataSource.load('' + url, {
+    /** @type {string|Document} */
+    var loadParam = url;
+
+    /** @type {string} */
+    var kml = olcs.obj(olLayer.getSource()).get('kmlString');
+    if (kml) {
+      loadParam =(new DOMParser()).parseFromString(kml, 'text/xml');
+    }
+    dsP = Cesium.KmlDataSource.load(loadParam, {
       camera: this.scene.camera,
       canvas: this.scene.canvas,
-      proxy: proxy,
       clampToGround: true
     });
   }

@@ -646,19 +646,19 @@ goog.require('ga_urlutils_service');
          * Returns an Cesium terrain provider.
          */
         this.getCesiumTerrainProviderById = function(bodId) {
-          var provider;
           var config3d = this.getConfig3d(layers[bodId]);
-          if (config3d.type == 'terrain') {
-            var timestamp = this.getLayerTimestampFromYear(bodId, gaTime.get());
-            var requestedLayer = config3d.serverLayerName || bodId;
-            provider = new Cesium.CesiumTerrainProvider({
-              url: getTerrainTileUrl(requestedLayer, timestamp),
-              availableLevels: window.terrainAvailableLevels,
-              rectangle: gaMapUtils.extentToRectangle(
-                gaGlobalOptions.defaultExtent)
-            });
-            provider.bodId = bodId;
+          if (!/^terrain$/.test(config3d.type)) {
+            return;
           }
+          var timestamp = this.getLayerTimestampFromYear(bodId, gaTime.get());
+          var requestedLayer = config3d.serverLayerName || bodId;
+          var provider = new Cesium.CesiumTerrainProvider({
+            url: getTerrainTileUrl(requestedLayer, timestamp),
+            availableLevels: window.terrainAvailableLevels,
+            rectangle: gaMapUtils.extentToRectangle(
+              gaGlobalOptions.defaultExtent)
+          });
+          provider.bodId = bodId;
           return provider;
         };
 
@@ -666,21 +666,21 @@ goog.require('ga_urlutils_service');
          * Returns an Cesium 3D Tileset.
          */
         this.getCesiumTileset3DById = function(bodId) {
-          var tileset, config = layers[bodId];
-          var config3d = this.getConfig3d(config);
+          var config3d = this.getConfig3d(layers[bodId]);
+          if (!/^tileset3d$/.test(config3d.type)) {
+            return;
+          }
           var timestamp = this.getLayerTimestampFromYear(bodId, gaTime.get());
           var requestedLayer = config3d.serverLayerName || bodId;
-          if (config3d.type == 'tileset3d') {
-            tileset = new Cesium.Cesium3DTileset({
-              url: getTileset3DUrl(requestedLayer, timestamp),
-              //debugShowStatistics: true,
-              maximumNumberOfLoadedTiles: 3,
-              dynamicScreenSpaceError: true,
-              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0,
-                  50000)//en meters
-            });
-            tileset.bodId = bodId;
-          }
+          var tileset = new Cesium.Cesium3DTileset({
+            url: getTileset3DUrl(requestedLayer, timestamp),
+            //debugShowStatistics: true,
+            maximumNumberOfLoadedTiles: 3,
+            dynamicScreenSpaceError: true,
+            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0,
+                50000)//en meters
+          });
+          tileset.bodId = bodId;
           return tileset;
         };
 
@@ -688,10 +688,13 @@ goog.require('ga_urlutils_service');
          * Returns an Cesium imagery provider.
          */
         this.getCesiumImageryProviderById = function(bodId) {
-          var provider, params, config = layers[bodId];
-          bodId = config.config3d || bodId;
+          var config = layers[bodId];
           var config3d = this.getConfig3d(config);
-          // Only native tiles have a 3d config
+          if (!/^(wms|wmts|aggregate)$/.test(config3d.type)) {
+            return;
+          }
+          var params;
+          bodId = config.config3d || bodId;
           var timestamp = this.getLayerTimestampFromYear(bodId, gaTime.get());
           var requestedLayer = config3d.wmsLayers || config3d.serverLayerName ||
               bodId;
@@ -747,37 +750,33 @@ goog.require('ga_urlutils_service');
           }
           var extent = gaMapUtils.intersectWithDefaultExtent(config3d.extent ||
               ol.proj.get(gaGlobalOptions.defaultEpsg).getExtent());
-          if (params) {
-            var minRetLod = gaMapUtils.getLodFromRes(config3d.maxResolution) ||
-                window.minimumRetrievingLevel;
-            var maxRetLod = gaMapUtils.getLodFromRes(config3d.minResolution);
-            // Set maxLod as undefined deactivate client zoom.
-            var maxLod = (maxRetLod) ? undefined : 18;
-            if (maxLod && config3d.resolutions) {
-              maxLod = gaMapUtils.getLodFromRes(
-                  config3d.resolutions[config3d.resolutions.length - 1]);
-            }
-            provider = new Cesium.UrlTemplateImageryProvider({
-              url: params.url,
-              subdomains: params.subdomains,
-              minimumRetrievingLevel: minRetLod,
-              maximumRetrievingLevel: maxRetLod,
-              // This property active client zoom for next levels.
-              maximumLevel: maxLod,
-              rectangle: gaMapUtils.extentToRectangle(extent),
-              tilingScheme: new Cesium.GeographicTilingScheme(),
-              tileWidth: params.tileSize,
-              tileHeight: params.tileSize,
-              hasAlphaChannel: (format == 'png'),
-              availableLevels: window.imageryAvailableLevels,
-              // Experimental: restrict all rasters from 0 - 17 to terrain
-              // availability and 18 to Swiss bbox
-              metadataUrl: imageryMetadataUrl
-            });
+          var minRetLod = gaMapUtils.getLodFromRes(config3d.maxResolution) ||
+              window.minimumRetrievingLevel;
+          var maxRetLod = gaMapUtils.getLodFromRes(config3d.minResolution);
+          // Set maxLod as undefined deactivate client zoom.
+          var maxLod = (maxRetLod) ? undefined : 18;
+          if (maxLod && config3d.resolutions) {
+            maxLod = gaMapUtils.getLodFromRes(
+                config3d.resolutions[config3d.resolutions.length - 1]);
           }
-          if (provider) {
-            provider.bodId = bodId;
-          }
+          var provider = new Cesium.UrlTemplateImageryProvider({
+            url: params.url,
+            subdomains: params.subdomains,
+            minimumRetrievingLevel: minRetLod,
+            maximumRetrievingLevel: maxRetLod,
+            // This property active client zoom for next levels.
+            maximumLevel: maxLod,
+            rectangle: gaMapUtils.extentToRectangle(extent),
+            tilingScheme: new Cesium.GeographicTilingScheme(),
+            tileWidth: params.tileSize,
+            tileHeight: params.tileSize,
+            hasAlphaChannel: (format == 'png'),
+            availableLevels: window.imageryAvailableLevels,
+            // Experimental: restrict all rasters from 0 - 17 to terrain
+            // availability and 18 to Swiss bbox
+            metadataUrl: imageryMetadataUrl
+          });
+          provider.bodId = bodId;
           return provider;
         };
 
@@ -788,18 +787,15 @@ goog.require('ga_urlutils_service');
           var config = layers[bodId];
           bodId = config.config3d;
           var config3d = this.getConfig3d(config);
-          if (config3d && config3d.type == 'kml') {
-            var url = config3d.url;
-            var proxy = new Cesium.DefaultProxy(gaGlobalOptions.ogcproxyUrl);
-
-
-            var dsP = Cesium.KmlDataSource.load(url, {
-              camera: scene.camera,
-              canvas: scene.canvas,
-              proxy: proxy
-            });
-            return dsP;
+          if (!/^kml$/.test(config3d.type)) {
+            return;
           }
+          var dsP = Cesium.KmlDataSource.load(config3d.url, {
+            camera: scene.camera,
+            canvas: scene.canvas,
+            proxy: new Cesium.DefaultProxy(gaGlobalOptions.ogcproxyUrl)
+          });
+          return dsP;
         };
 
         /**

@@ -71,7 +71,7 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     var fogEnabled = boolParam('fogEnabled', true);
     var fogDensity = floatParam('fogDensity', '0.0001');
     var fogSseFactor = floatParam('fogSseFactor', '25');
-    var terrainLevels = [8, 11, 14, 16, 18];
+    var terrainLevels = [8, 11, 14, 16, 17];
     var jDate = new Date();
     jDate.setUTCHours(8);
     jDate = Cesium.JulianDate.fromDate(jDate);
@@ -113,7 +113,7 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     var scene = cesiumViewer.getCesiumScene();
     scene.backgroundColor = Cesium.Color.WHITE;
     scene.globe.depthTestAgainstTerrain = true;
-    //scene.screenSpaceCameraController.maximumZoomDistance = 500000;
+    scene.screenSpaceCameraController.maximumZoomDistance = 500000;
     scene.terrainProvider =
         gaLayers.getCesiumTerrainProviderById(gaGlobalOptions.defaultTerrain);
     scene.postRender.addEventListener(limitCamera, scene);

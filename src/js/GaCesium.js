@@ -129,8 +129,7 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
 
     // Tileset 3D
     var tileset3d = (gaPermalink.getParams()['tileset3d'] || '').split(',');
-    tileset3d.push('ch.swisstopo.swissnames3d.3d',
-        'ch.swisstopo.swisstlm3d.3d');
+    tileset3d.push('ch.swisstopo.swissnames3d.3d');
     tileset3d.forEach(function(tileset3dId) {
       if (tileset3dId) {
         var tileset = gaLayers.getCesiumTileset3DById(tileset3dId);

@@ -127,6 +127,7 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     // Tileset 3D
     var tileset3d = (gaPermalink.getParams()['tileset3d'] || '').split(',');
     tileset3d.push('ch.swisstopo.swissnames3d.3d',
+        'ch.swisstopo.bridgestest.3d',
         'ch.swisstopo.swisstlm3d.3d');
     tileset3d.forEach(function(tileset3dId) {
       if (tileset3dId) {
@@ -154,6 +155,12 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
               description:'"Building id ${id} has height ${Height}."'
             }
           });*/
+        }
+        if (/swisstlm3d\.3d/.test(tileset3dId)) {
+          tileset.style = new Cesium.Cesium3DTileStyle({
+            show: '!regExp(".*(trasse|Weg|fahrt|bahn|Verbindung|spur).*")' +
+                  '.test(${OBJEKTART}'
+          });
         }
         scene.primitives.add(tileset);
       }

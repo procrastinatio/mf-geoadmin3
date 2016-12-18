@@ -72,6 +72,11 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     var fogDensity = floatParam('fogDensity', '0.0001');
     var fogSseFactor = floatParam('fogSseFactor', '25');
     var terrainLevels = [8, 11, 14, 16, 17];
+    // Set good time for lighting
+    var d = new Date();
+    d.setUTCHours(8);
+    var jDate = Cesium.JulianDate.fromDate(d);
+
     window.minimumRetrievingLevel = intParam('minimumRetrievingLevel', '8');
     window.terrainAvailableLevels = arrayParam('terrainLevels', terrainLevels);
     window.imageryAvailableLevels = arrayParam('imageryLevels', undefined);
@@ -80,6 +85,9 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     try {
       cesiumViewer = new olcs.OLCesium({
         map: map,
+        time: function() {
+          return jDate;
+        },
         createSynchronizers: function(map, scene) {
            return [
              new olcs.GaRasterSynchronizer(map, scene),
@@ -118,17 +126,11 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     scene.screenSpaceCameraController.inertiaZoom = 0.9;
     scene.screenSpaceCameraController.minimumZoomDistance = 2;
 
-    // Set good time for lighting
-    var d = new Date();
-    d.setUTCHours(8);
-    var jDate = Cesium.JulianDate.fromDate(d);
     enableOl3d(cesiumViewer, enabled);
 
     // Tileset 3D
     var tileset3d = (gaPermalink.getParams()['tileset3d'] || '').split(',');
-    tileset3d.push('ch.swisstopo.swissnames3d.3d',
-        'ch.swisstopo.bridgestest.3d',
-        'ch.swisstopo.swisstlm3d.3d');
+    tileset3d.push('ch.swisstopo.swisstlm3d.3d');
     tileset3d.forEach(function(tileset3dId) {
       if (tileset3dId) {
         var tileset = gaLayers.getCesiumTileset3DById(tileset3dId);
@@ -156,12 +158,14 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
             }
           });*/
         }
+        /*
         if (/swisstlm3d\.3d/.test(tileset3dId)) {
           tileset.style = new Cesium.Cesium3DTileStyle({
             show: '!regExp(".*(trasse|Weg|fahrt|bahn|Verbindung|spur).*")' +
                   '.test(${OBJEKTART}'
           });
         }
+        */
         scene.primitives.add(tileset);
       }
     });

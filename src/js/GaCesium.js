@@ -146,13 +146,19 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
       if (tileset3dId) {
         var tileset = gaLayers.getCesiumTileset3DById(tileset3dId);
         if (/names3d\.3d/.test(tileset3dId)) {
+          var fontsize = params['fontsize'] ? params['fontsize'] : 24;
+          var backwidth = params['backwidth'] ?
+                          parseInt(params['backwidth']) : 3;
+
           tileset.style = new Cesium.Cesium3DTileStyle({
             show: true,
             color: 'rgb(255, 255, 255)',
             outlineColor: 'rgb(0, 0, 0)',
-            outlineWidth: 3,
+            //color: 'rgb(255, 0, 0)',
+            //outlineColor: 'rgb(255, 255, 255)',
+            outlineWidth: backwidth,
             labelStyle: 2,
-            font: "'24px arial'"
+            font: "'" + fontsize + "px arial'"
           });
         }
         if (tileset) {
@@ -173,6 +179,7 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
 
   var manageTilesets = function(primitives, scene, bg) {
     var show = !bg || !/^voidLayer$/.test(bg.id);
+    show = true;
     primitives.forEach(function(prim) {
       if (!scene.primitives.contains(prim)) {
         scene.primitives.add(prim);

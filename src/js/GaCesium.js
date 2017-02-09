@@ -116,7 +116,6 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     globe.maximumScreenSpaceError = maximumScreenSpaceError;
     var scene = cesiumViewer.getCesiumScene();
     scene.backgroundColor = Cesium.Color.WHITE;
-    scene.globe.depthTestAgainstTerrain = true;
     scene.screenSpaceCameraController.maximumZoomDistance = 500000;
     scene.terrainProvider =
         gaLayers.getCesiumTerrainProviderById(gaGlobalOptions.defaultTerrain);
@@ -182,6 +181,7 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
   };
 
   var limitCamera = function() {
+    this.globe.depthTestAgainstTerrain = this.camera.pitch > -Math.PI/8;
     var pos = this.camera.positionCartographic.clone();
     var inside = ol.extent.containsXY(extent4326, pos.longitude, pos.latitude);
     if (!inside) {

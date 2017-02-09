@@ -120,6 +120,9 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     scene.terrainProvider =
         gaLayers.getCesiumTerrainProviderById(gaGlobalOptions.defaultTerrain);
     scene.postRender.addEventListener(limitCamera, scene);
+    scene.preRender.addEventListener(function() {
+      manageCorridors(this.primitives, this.camera.positionCartographic.height);
+    }, scene);
     scene.fog.enabled = fogEnabled;
     scene.fog.density = fogDensity;
     scene.fog.screenSpaceErrorFactor = fogSseFactor;
@@ -180,8 +183,55 @@ var GaCesium = function(map, gaPermalink, gaLayers, gaGlobalOptions,
     });
   };
 
+  var lastMultiplier;
+  var setCorridorWidth = function(c, height) {
+    var multiplier;
+    if (height < 1000) {
+      multiplier = 1.0;
+    } else if (height < 10000) {
+      multiplier = 10.0;
+    } else if (height < 100000) {
+      multiplier = 100.0;
+    } else if (height < 1000000) {
+      multiplier = 200.0;
+    } else {
+      multiplier = 500.0;
+    }
+
+    if (lastMultiplier !== multiplier) {
+      lastMultiplier = multiplier;
+      if (!c.originalWidth) {
+        c.originalWidth = c._width;
+      }
+      c._width = c.originalWidth * multiplier;
+    }
+  };
+  var manageCorridors = function(primitives, height) {
+    for (var i = 0, ii = primitives.length; i < ii; i++) {
+      var prim = primitives;
+      if (prim instanceof Cesium.PrimitiveCollection) {
+        prim = prim.get(i);
+      } if (angular.isArray(prim)) {
+        prim = prim[i];
+      }
+      if (prim instanceof Cesium.PrimitiveCollection) {
+        manageCorridors(prim, height);
+      } else if (prim instanceof Cesium.GroundPrimitive) {
+        // geometryInstances can be an array or a Cesium.GeometryInstance
+        var arr, insts = prim.geometryInstances;
+        if (insts instanceof Cesium.GeometryInstance) {
+          arr = [insts];
+        }
+        manageCorridors(arr || insts || [], height);
+      } else if (prim.geometry instanceof Cesium.CorridorGeometry) {
+        setCorridorWidth(prim.geometry, height);
+      }
+    }
+  };
+
+
   var limitCamera = function() {
-    this.globe.depthTestAgainstTerrain = this.camera.pitch > -Math.PI/8;
+    this.globe.depthTestAgainstTerrain = this.camera.pitch > -Math.PI / 8;
     var pos = this.camera.positionCartographic.clone();
     var inside = ol.extent.containsXY(extent4326, pos.longitude, pos.latitude);
     if (!inside) {

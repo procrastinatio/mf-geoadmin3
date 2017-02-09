@@ -27661,6 +27661,7 @@ olcs.FeatureConverter.prototype.olLineStringGeometryToCesium = function(layer, f
   if (heightReference == Cesium.HeightReference.CLAMP_TO_GROUND) {
     var color = this.extractColorFromOlStyle(olStyle, true);
     outlinePrimitive = new Cesium.GroundPrimitive({
+      releaseGeometryInstances: false,
       // always update Cesium externs before adding a property
       geometryInstances: new Cesium.GeometryInstance({
         geometry: new Cesium.CorridorGeometry(geometryOptions),

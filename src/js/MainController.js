@@ -46,6 +46,7 @@ goog.require('ga_topic_service');
       '</span>';
 
       var map = new ol.Map({
+        renderer: ['webgl', 'canvas'],
         controls: ol.control.defaults({
           attribution: false,
           rotate: false,
@@ -60,7 +61,6 @@ goog.require('ga_topic_service');
           touchRotate: false,
           keyboard: false
         }),
-        renderer: 'canvas',
         view: new ol.View({
           projection: defaultProjection,
           center: ol.extent.getCenter(gaMapUtils.defaultExtent),

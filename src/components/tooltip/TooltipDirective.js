@@ -112,12 +112,8 @@ goog.require('ga_topic_service');
             // onclick, geolocation circle is unselectable
             if (layer && !feature.getProperties().unselectable) {
               if (!vectorLayer || vectorLayer == layer) {
-<<<<<<< HEAD
-                if (!featureFound) {
-=======
                 if (!featureFound && (isFeatureQueryable(feature) ||
                     isTiledFeatureQueryable(feature))) {
->>>>>>> Add mvt test layer
                   featureFound = feature;
                 }
               }
@@ -436,12 +432,7 @@ goog.require('ga_topic_service');
                 layersToQuery.vectorTileLayers.forEach(function(olLayer) {
                   var feature = findVectorFeature(map, pixel, olLayer);
                   if (feature) {
-<<<<<<< HEAD
-                    showVectorFeature(feature, layerToQuery);
-                    all.push($q.when(1));
-=======
                     showVectorTileFeature(feature, olLayer);
->>>>>>> Add mvt test layer
                   }
                 });
               }

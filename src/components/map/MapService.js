@@ -807,6 +807,13 @@ goog.require('ga_urlutils_service');
           var olSource = (layer.timeEnabled) ? null : layer.olSource;
           if (layer.type == 'wmts') {
             if (!olSource) {
+              var subs;
+              if (layer.serverLayerName == 'ch.swisstopo.swissimage' ||
+                  layer.serverLayerName == 'ch.swisstopo.swissimage-product') {
+                  subs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+              } else {
+                  subs = dfltWmtsNativeSubdomains;
+              }
               var wmtsTplUrl = getWmtsGetTileTpl(layer.serverLayerName, null,
                   '2056', layer.format, true)
                   .replace('{z}', '{TileMatrix}')
@@ -825,7 +832,7 @@ goog.require('ga_urlutils_service');
                 tileGrid: gaTileGrid.get(layer.resolutions,
                     layer.minResolution),
                 tileLoadFunction: tileLoadFunction,
-                urls: getImageryUrls(wmtsTplUrl, dfltWmtsNativeSubdomains),
+                urls: getImageryUrls(wmtsTplUrl, subs),
                 crossOrigin: crossOrigin
               });
             }

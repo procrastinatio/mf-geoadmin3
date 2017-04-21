@@ -520,6 +520,19 @@ goog.require('ga_urlutils_service');
 
             // Live modifications for 3d test
             if (response.data) {
+              if (response.data['ch.swisstopo.swissimage']) {
+                response.data['ch.swisstopo.swissimage'].timestamps =
+                    ['99_automata_test'];
+              }
+              if (response.data['ch.swisstopo.swissimage-product']) {
+                response.data['ch.swisstopo.swissimage-product'].timestamps =
+                    ['99_automata_test'];
+              }
+              if (response.data['ch.swisstopo.swissimage-product_3d']) {
+                response.data['ch.swisstopo.swissimage-product_3d'].timestamps =
+                    ['99_automata_test'];
+              }
+
               // Test layers opaque setting
               var ids = [
                 'ch.swisstopo.swissimage-product',
@@ -539,7 +552,6 @@ goog.require('ga_urlutils_service');
                   response.data[id].opaque = true;
                 }
               });
-
               // Test shop layers allowing multiple results in tooltip.
               ids = [
                 'ch.swisstopo.lubis-luftbilder_farbe',

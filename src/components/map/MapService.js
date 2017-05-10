@@ -520,10 +520,6 @@ goog.require('ga_urlutils_service');
 
             // Live modifications for 3d test
             if (response.data) {
-              if (response.data['ch.swisstopo.swissimage']) {
-                response.data['ch.swisstopo.swissimage'].timestamps =
-                    ['99_automata_test'];
-              }
               if (response.data['ch.swisstopo.swissimage-product']) {
                 response.data['ch.swisstopo.swissimage-product'].timestamps =
                     ['99_automata_test'];

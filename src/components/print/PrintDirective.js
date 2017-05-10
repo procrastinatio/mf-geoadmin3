@@ -521,6 +521,9 @@ goog.require('ga_urlutils_service');
           encodeURIComponent(gaPermalink.getHref());
       var print_zoom = getZoomFromScale($scope.scale.value);
       qrcodeUrl = qrcodeUrl.replace(/zoom%3D(\d{1,2})/, 'zoom%3D' + print_zoom);
+      //gjn: temporary fix for
+      //https://github.com/geoadmin/mf-geoadmin3/issues/3794
+      qrcodeUrl = qrcodeUrl.replace(/^https/, 'http');
       var encLayers = [];
       var encLegends;
       var attributions = [];

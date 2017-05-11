@@ -283,7 +283,7 @@ goog.require('ga_urlutils_service');
           }
           angular.extend(enc, {
             type: 'WMTS',
-            baseURL: location.protocol + '//wmts.geo.admin.ch',
+            baseURL: location.protocol + '//wmts100.bgdi.ch',
             layer: config.serverLayerName,
             maxExtent: layer.getExtent(),
             tileOrigin: tileGrid.getOrigin(),

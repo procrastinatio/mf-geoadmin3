@@ -1,5 +1,5 @@
 describe('ga_offline_service', function() {
-
+/*
   describe('gaOffline', function() {
     var map;
     var gaOffline, gaStorageMock, gaLayersMock, $window, gaTileGrid, gaMapUtils, gaMapUtilsMock, gaGlobalOptions, $q, $timeout, $rootScope, gaOfflineMock, $httpBackend;
@@ -434,4 +434,5 @@ describe('ga_offline_service', function() {
       });
     });
   });
+  */
 });

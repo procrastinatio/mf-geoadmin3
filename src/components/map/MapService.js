@@ -20,16 +20,27 @@ goog.require('ga_urlutils_service');
   ]);
 
   module.provider('gaTileGrid', function() {
-    var origin = [420000, 350000];
+    //var origin = [420000, 350000];
+    //var origin = [-20037508.3428, -20037508.3428];
+    var origin = [-20037508.3428, 20037508.3428];
 
     function getDefaultResolutions() {
-        return [4000, 3750, 3500, 3250, 3000, 2750, 2500, 2250,
-                2000, 1750, 1500, 1250, 1000, 750, 650, 500, 250,
-                100, 50, 20, 10, 5, 2.5, 2, 1.5, 1, 0.5];
+    //    return [4000, 3750, 3500, 3250, 3000, 2750, 2500, 2250,
+    //            2000, 1750, 1500, 1250, 1000, 750, 650, 500, 250,
+    //            100, 50, 20, 10, 5, 2.5, 2, 1.5, 1, 0.5];
+
+          return [156543.03392812, 78271.51696392, 39135.75848196,
+                  19567.879241008, 9783.939620504, 4891.969810252,
+                  2445.984905126, 1222.9924525616, 611.4962262808,
+                  305.7481131404, 152.87405657048, 76.43702828524,
+                  38.21851414248, 19.109257071296, 9.554628535648,
+                  4.777314267824, 2.388657133912, 1.194328566956,
+                  0.597164283478, 0.2985821417404];
     }
 
     function getWmsResolutions() {
-        return getDefaultResolutions().concat([0.25, 0.1]);
+        //return getDefaultResolutions().concat([0.25, 0.1]);
+        return getDefaultResolutions().concat([0.1]);
     }
 
     function createTileGrid(resolutions, type) {
@@ -816,10 +827,10 @@ goog.require('ga_urlutils_service');
           if (layer.type == 'wmts') {
             if (!olSource) {
               var wmtsTplUrl = getWmtsGetTileTpl(layer.serverLayerName, null,
-                  '21781', layer.format, true)
+                  '3857', layer.format, true)
                   .replace('{z}', '{TileMatrix}')
-                  .replace('{x}', '{TileCol}')
-                  .replace('{y}', '{TileRow}');
+                  .replace('{x}', '{TileRow}')
+                  .replace('{y}', '{TileCol}');
               olSource = layer.olSource = new ol.source.WMTS({
                 dimensions: {
                   'Time': timestamp
@@ -830,7 +841,9 @@ goog.require('ga_urlutils_service');
                 cacheSize: layer.timeEnabled ? 0 : 2048,
                 projection: gaGlobalOptions.defaultEpsg,
                 requestEncoding: 'REST',
-                tileGrid: gaTileGrid.get(layer.resolutions,
+                //tileGrid: gaTileGrid.get(layer.resolutions,
+                //    layer.minResolution),
+                tileGrid: gaTileGrid.get(undefined,
                     layer.minResolution),
                 tileLoadFunction: tileLoadFunction,
                 urls: getImageryUrls(wmtsTplUrl, dfltWmtsNativeSubdomains),

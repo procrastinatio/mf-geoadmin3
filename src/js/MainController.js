@@ -66,8 +66,11 @@ goog.require('ga_window_service');
         }),
         renderer: 'canvas',
         view: new ol.View({
-          projection: defaultProjection,
+          //projection: defaultProjection,
           center: ol.extent.getCenter(gaMapUtils.defaultExtent),
+          //zoom: 15,
+          //maxZoom: 19,
+          //minZoom: 2
           resolution: gaMapUtils.defaultResolution,
           resolutions: gaMapUtils.viewResolutions
         }),

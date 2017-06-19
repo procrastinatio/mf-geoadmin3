@@ -626,8 +626,8 @@ goog.require('ga_urlutils_service');
                  response.data[vt] = {
                    type: 'vectortile',
                    serverLayerName: vt,
-                   url: 'https://vectortiles.dev.bgdi.ch/2.1.0/swissnames/' +
-                       '21781/default/current/{z}/{x}/{y}.pbf',
+                   url: 'https://tileserver.dev.bgdi.ch/data/' +
+                       'SWISSNAMES-LV03-mbtiles/{z}/{x}/{y}.pbf',
                    attribution: 'swisstopo',
                    attributionUrl: 'https://www.swisstopo.admin.ch/' + lang +
                        '/home.html'
@@ -995,8 +995,7 @@ goog.require('ga_urlutils_service');
             olLayer = new ol.layer.VectorTile({
               source: new ol.source.VectorTile({
                 format: new ol.format.MVT(),
-                tileGrid: gaTileGrid.get(layer.resolutions, layer.minResolution,
-                    layer.type),
+                tileGrid: ol.tilegrid.createXYZ(),
                 tilePixelRatio: 16,
                 url: layer.url || getVectorTilesUrl(layer.serverLayerName,
                     timestamp, dfltVectorTilesSubdomains)

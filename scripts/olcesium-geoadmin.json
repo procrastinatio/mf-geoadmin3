@@ -137,6 +137,7 @@
     "ol.source.WMTS",
     "ol.source.WMTS#*",
     "ol.source.WMTS.optionsFromCapabilities",
+    "ol.tilegrid.createXYZ",
     "ol.tilegrid.TileGrid",
     "ol.tilegrid.TileGrid#*",
     "ol.tilegrid.WMTS",

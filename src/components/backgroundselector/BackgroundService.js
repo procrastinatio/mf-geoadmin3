@@ -19,13 +19,14 @@ goog.require('ga_permalink');
       var bg; // The current background
       var bgs = []; // The list of backgrounds available
       var bgsP; // Promise resolved when the background service is initialized.
-      var voidLayer = {id: 'voidLayer', label: 'void_layer'};
+      var labels, voidLayer = {id: 'voidLayer', label: 'void_layer'};
       var predefinedBgs = {
         'voidLayer': voidLayer,
         'ch.swisstopo.swissimage': {
           id: 'ch.swisstopo.swissimage',
           label: 'bg_luftbild',
-          disable3d: true
+          disable3d: true,
+          labels: 'swissnames'
         },
         'ch.swisstopo.pixelkarte-farbe': {
           id: 'ch.swisstopo.pixelkarte-farbe',
@@ -130,7 +131,17 @@ goog.require('ga_permalink');
                   layers.setAt(0, layer);
                 } else {
                   layers.insertAt(0, layer);
+
                 }
+              }
+              if (bg.labels) {
+                labels = labels || gaLayers.getOlLayerById(bg.labels);
+                labels.displayInLayerManager = false;
+                labels.tooltip = false;
+                labels.setZIndex(1000);
+                layers.push(labels);
+              } else if (labels) {
+                layers.remove(labels);
               }
               broadcast();
              }

@@ -45,7 +45,7 @@ describe('ga_import_controller', function() {
       // service.
       try {
         $timeout.verifyNoPendingTasks();
-      } catch(e) {
+      } catch (e) {
         $timeout.flush();
       }
       $timeout.verifyNoPendingTasks();

@@ -33,9 +33,15 @@ goog.require('ga_urlutils_service');
     }
 
     function createTileGrid(resolutions, type) {
+      resolutions = resolutions || getDefaultResolutions();
       if (type === 'wms') {
         return new ol.tilegrid.TileGrid({
           tileSize: 512,
+          origin: origin,
+          resolutions: resolutions
+        });
+      } else if (type === 'vectortile') {
+        return new ol.tilegrid.TileGrid({
           origin: origin,
           resolutions: resolutions
         });
@@ -398,7 +404,7 @@ goog.require('ga_urlutils_service');
         gaBrowserSniffer, gaDefinePropertiesForLayer, gaMapUtils,
         gaNetworkStatus, gaStorage, gaTileGrid, gaUrlUtils,
         gaStylesFromLiterals, gaGlobalOptions, gaPermalink,
-        gaLang, gaTime) {
+        gaLang, gaTime, gaStyleFactory) {
 
       var h2 = function(domainsArray) {
         if (gaBrowserSniffer.h2) {
@@ -610,6 +616,33 @@ goog.require('ga_urlutils_service');
                   };
                 }
               });
+
+              // VectorTile
+              var vts = [
+                'swissnames'
+              ];
+              vts.forEach(function(vt) {
+               if (vt) {
+                 response.data[vt] = {
+                   type: 'vectortile',
+                   serverLayerName: vt,
+                   url: 'https://vectortiles.dev.bgdi.ch/2.1.0/swissnames/' +
+                       '21781/default/current/{z}/{x}/{y}.pbf',
+                   attribution: 'swisstopo',
+                   attributionUrl: 'https://www.swisstopo.admin.ch/' + lang +
+                       '/home.html'
+                 };
+               }
+              });
+
+              // Create a LayerGroup with swissnames and swiimage
+              response.data['ch.swisstopo.swissimagelabels'] = {
+                type: 'aggregate',
+                subLayersIds: [
+                  'ch.swisstopo.swissimage',
+                  'swissnames'
+                ]
+              };
             }
             if (!layers) { // First load
               layers = response.data;
@@ -958,7 +991,20 @@ goog.require('ga_urlutils_service');
             if (!layer.updateDelay) {
               setLayerSource();
             }
+          } else if (layer.type == 'vectortile') {
+            olLayer = new ol.layer.VectorTile({
+              source: new ol.source.VectorTile({
+                format: new ol.format.MVT(),
+                tileGrid: gaTileGrid.get(layer.resolutions, layer.minResolution,
+                    layer.type),
+                tilePixelRatio: 16,
+                url: layer.url || getVectorTilesUrl(layer.serverLayerName,
+                    timestamp, dfltVectorTilesSubdomains)
+              }),
+              style: gaStyleFactory.getStyleFunction('labels')
+            });
           }
+
           if (angular.isDefined(olLayer)) {
             gaDefinePropertiesForLayer(olLayer);
             olLayer.bodId = bodId;

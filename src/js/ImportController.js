@@ -57,6 +57,9 @@ goog.require('ngeo.fileService');
         'http://www.sogis1.so.ch/wms/avwms',
         'http://www.sogis1.so.ch/wms/grundbuchplan',
         'http://www.sogis1.so.ch/wms/wms_lidar',
+        'http://wms.geo.sh.ch/avwms/service.svc/get?SERVICE=WMS&request=GetCapabilities'
+        'http://wms.geo.sh.ch/naturgefahrenwms/service.svc/get?request=GetCapabilities&service=WMS'
+        'http://wms.geo.sh.ch/nutzungsplanungwms/service.svc/get?request=GetCapabilities&service=WMS'
         'http://wms.vd.ch/public/services/wmsVD/Mapserver/Wmsserver',
         'https://wms.geo.bs.ch/wmsBS',
         'http://vogis.cnv.at/mapserver/mapserv?map=i_flaechenwidmung_v_wms.map',

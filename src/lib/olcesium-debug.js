@@ -5244,6 +5244,7 @@ if (ol.ENABLE_PROJ4JS) {
   };
 }
 ol.proj.getPointResolution = function(projection, resolution, point) {
+  projection = ol.proj.get(projection);
   var pointResolution;
   var getter = projection.getPointResolutionFunc();
   if (getter) {
@@ -5344,9 +5345,9 @@ ol.proj.get = function(projectionLike) {
     if (typeof projectionLike === "string") {
       var code = projectionLike;
       projection = ol.proj.projections.get(code);
-      if (ol.ENABLE_PROJ4JS) {
+      if (ol.ENABLE_PROJ4JS && !projection) {
         var proj4js = ol.proj.proj4.get();
-        if (!projection && typeof proj4js == "function" && proj4js.defs(code) !== undefined) {
+        if (typeof proj4js == "function" && proj4js.defs(code) !== undefined) {
           projection = new ol.proj.Projection({code:code});
           ol.proj.addProjection(projection);
         }
@@ -7819,6 +7820,7 @@ if (ol.ENABLE_WEBGL) {
 ;goog.provide("ol.render.webgl");
 goog.require("ol");
 if (ol.ENABLE_WEBGL) {
+  ol.render.webgl.defaultFont = "10px sans-serif";
   ol.render.webgl.defaultFillStyle = [0.0, 0.0, 0.0, 1.0];
   ol.render.webgl.defaultLineCap = "round";
   ol.render.webgl.defaultLineDash = [];
@@ -7826,6 +7828,8 @@ if (ol.ENABLE_WEBGL) {
   ol.render.webgl.defaultLineJoin = "round";
   ol.render.webgl.defaultMiterLimit = 10;
   ol.render.webgl.defaultStrokeStyle = [0.0, 0.0, 0.0, 1.0];
+  ol.render.webgl.defaultTextAlign = 0.5;
+  ol.render.webgl.defaultTextBaseline = 0.5;
   ol.render.webgl.defaultLineWidth = 1;
   ol.render.webgl.triangleIsCounterClockwise = function(x1, y1, x2, y2, x3, y3) {
     var area = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
@@ -8091,28 +8095,28 @@ if (ol.ENABLE_WEBGL) {
     }
   };
 }
-;goog.provide("ol.render.webgl.imagereplay.defaultshader");
+;goog.provide("ol.render.webgl.texturereplay.defaultshader");
 goog.require("ol");
 goog.require("ol.webgl.Fragment");
 goog.require("ol.webgl.Vertex");
 if (ol.ENABLE_WEBGL) {
-  ol.render.webgl.imagereplay.defaultshader.Fragment = function() {
-    ol.webgl.Fragment.call(this, ol.render.webgl.imagereplay.defaultshader.Fragment.SOURCE);
+  ol.render.webgl.texturereplay.defaultshader.Fragment = function() {
+    ol.webgl.Fragment.call(this, ol.render.webgl.texturereplay.defaultshader.Fragment.SOURCE);
   };
-  ol.inherits(ol.render.webgl.imagereplay.defaultshader.Fragment, ol.webgl.Fragment);
-  ol.render.webgl.imagereplay.defaultshader.Fragment.DEBUG_SOURCE = "precision mediump float;\nvarying vec2 v_texCoord;\nvarying float v_opacity;\n\nuniform float u_opacity;\nuniform sampler2D u_image;\n\nvoid main(void) {\n  vec4 texColor = texture2D(u_image, v_texCoord);\n  gl_FragColor.rgb = texColor.rgb;\n  float alpha = texColor.a * v_opacity * u_opacity;\n  if (alpha == 0.0) {\n    discard;\n  }\n  gl_FragColor.a = alpha;\n}\n";
-  ol.render.webgl.imagereplay.defaultshader.Fragment.OPTIMIZED_SOURCE = "precision mediump float;varying vec2 a;varying float b;uniform float k;uniform sampler2D l;void main(void){vec4 texColor=texture2D(l,a);gl_FragColor.rgb=texColor.rgb;float alpha=texColor.a*b*k;if(alpha==0.0){discard;}gl_FragColor.a=alpha;}";
-  ol.render.webgl.imagereplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ? ol.render.webgl.imagereplay.defaultshader.Fragment.DEBUG_SOURCE : ol.render.webgl.imagereplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
-  ol.render.webgl.imagereplay.defaultshader.fragment = new ol.render.webgl.imagereplay.defaultshader.Fragment;
-  ol.render.webgl.imagereplay.defaultshader.Vertex = function() {
-    ol.webgl.Vertex.call(this, ol.render.webgl.imagereplay.defaultshader.Vertex.SOURCE);
+  ol.inherits(ol.render.webgl.texturereplay.defaultshader.Fragment, ol.webgl.Fragment);
+  ol.render.webgl.texturereplay.defaultshader.Fragment.DEBUG_SOURCE = "precision mediump float;\nvarying vec2 v_texCoord;\nvarying float v_opacity;\n\nuniform float u_opacity;\nuniform sampler2D u_image;\n\nvoid main(void) {\n  vec4 texColor = texture2D(u_image, v_texCoord);\n  gl_FragColor.rgb = texColor.rgb;\n  float alpha = texColor.a * v_opacity * u_opacity;\n  if (alpha == 0.0) {\n    discard;\n  }\n  gl_FragColor.a = alpha;\n}\n";
+  ol.render.webgl.texturereplay.defaultshader.Fragment.OPTIMIZED_SOURCE = "precision mediump float;varying vec2 a;varying float b;uniform float k;uniform sampler2D l;void main(void){vec4 texColor=texture2D(l,a);gl_FragColor.rgb=texColor.rgb;float alpha=texColor.a*b*k;if(alpha==0.0){discard;}gl_FragColor.a=alpha;}";
+  ol.render.webgl.texturereplay.defaultshader.Fragment.SOURCE = ol.DEBUG_WEBGL ? ol.render.webgl.texturereplay.defaultshader.Fragment.DEBUG_SOURCE : ol.render.webgl.texturereplay.defaultshader.Fragment.OPTIMIZED_SOURCE;
+  ol.render.webgl.texturereplay.defaultshader.fragment = new ol.render.webgl.texturereplay.defaultshader.Fragment;
+  ol.render.webgl.texturereplay.defaultshader.Vertex = function() {
+    ol.webgl.Vertex.call(this, ol.render.webgl.texturereplay.defaultshader.Vertex.SOURCE);
   };
-  ol.inherits(ol.render.webgl.imagereplay.defaultshader.Vertex, ol.webgl.Vertex);
-  ol.render.webgl.imagereplay.defaultshader.Vertex.DEBUG_SOURCE = "varying vec2 v_texCoord;\nvarying float v_opacity;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\nattribute vec2 a_offsets;\nattribute float a_opacity;\nattribute float a_rotateWithView;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_offsetScaleMatrix;\nuniform mat4 u_offsetRotateMatrix;\n\nvoid main(void) {\n  mat4 offsetMatrix = u_offsetScaleMatrix;\n  if (a_rotateWithView == 1.0) {\n    offsetMatrix = u_offsetScaleMatrix * u_offsetRotateMatrix;\n  }\n  vec4 offsets = offsetMatrix * vec4(a_offsets, 0.0, 0.0);\n  gl_Position = u_projectionMatrix * vec4(a_position, 0.0, 1.0) + offsets;\n  v_texCoord = a_texCoord;\n  v_opacity = a_opacity;\n}\n\n\n";
-  ol.render.webgl.imagereplay.defaultshader.Vertex.OPTIMIZED_SOURCE = "varying vec2 a;varying float b;attribute vec2 c;attribute vec2 d;attribute vec2 e;attribute float f;attribute float g;uniform mat4 h;uniform mat4 i;uniform mat4 j;void main(void){mat4 offsetMatrix=i;if(g==1.0){offsetMatrix=i*j;}vec4 offsets=offsetMatrix*vec4(e,0.0,0.0);gl_Position=h*vec4(c,0.0,1.0)+offsets;a=d;b=f;}";
-  ol.render.webgl.imagereplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ? ol.render.webgl.imagereplay.defaultshader.Vertex.DEBUG_SOURCE : ol.render.webgl.imagereplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
-  ol.render.webgl.imagereplay.defaultshader.vertex = new ol.render.webgl.imagereplay.defaultshader.Vertex;
-  ol.render.webgl.imagereplay.defaultshader.Locations = function(gl, program) {
+  ol.inherits(ol.render.webgl.texturereplay.defaultshader.Vertex, ol.webgl.Vertex);
+  ol.render.webgl.texturereplay.defaultshader.Vertex.DEBUG_SOURCE = "varying vec2 v_texCoord;\nvarying float v_opacity;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\nattribute vec2 a_offsets;\nattribute float a_opacity;\nattribute float a_rotateWithView;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_offsetScaleMatrix;\nuniform mat4 u_offsetRotateMatrix;\n\nvoid main(void) {\n  mat4 offsetMatrix = u_offsetScaleMatrix;\n  if (a_rotateWithView == 1.0) {\n    offsetMatrix = u_offsetScaleMatrix * u_offsetRotateMatrix;\n  }\n  vec4 offsets = offsetMatrix * vec4(a_offsets, 0.0, 0.0);\n  gl_Position = u_projectionMatrix * vec4(a_position, 0.0, 1.0) + offsets;\n  v_texCoord = a_texCoord;\n  v_opacity = a_opacity;\n}\n\n\n";
+  ol.render.webgl.texturereplay.defaultshader.Vertex.OPTIMIZED_SOURCE = "varying vec2 a;varying float b;attribute vec2 c;attribute vec2 d;attribute vec2 e;attribute float f;attribute float g;uniform mat4 h;uniform mat4 i;uniform mat4 j;void main(void){mat4 offsetMatrix=i;if(g==1.0){offsetMatrix=i*j;}vec4 offsets=offsetMatrix*vec4(e,0.0,0.0);gl_Position=h*vec4(c,0.0,1.0)+offsets;a=d;b=f;}";
+  ol.render.webgl.texturereplay.defaultshader.Vertex.SOURCE = ol.DEBUG_WEBGL ? ol.render.webgl.texturereplay.defaultshader.Vertex.DEBUG_SOURCE : ol.render.webgl.texturereplay.defaultshader.Vertex.OPTIMIZED_SOURCE;
+  ol.render.webgl.texturereplay.defaultshader.vertex = new ol.render.webgl.texturereplay.defaultshader.Vertex;
+  ol.render.webgl.texturereplay.defaultshader.Locations = function(gl, program) {
     this.u_image = gl.getUniformLocation(program, ol.DEBUG_WEBGL ? "u_image" : "l");
     this.u_offsetRotateMatrix = gl.getUniformLocation(program, ol.DEBUG_WEBGL ? "u_offsetRotateMatrix" : "j");
     this.u_offsetScaleMatrix = gl.getUniformLocation(program, ol.DEBUG_WEBGL ? "u_offsetScaleMatrix" : "i");
@@ -8305,44 +8309,38 @@ if (ol.ENABLE_WEBGL) {
     return texture;
   };
 }
-;goog.provide("ol.render.webgl.ImageReplay");
+;goog.provide("ol.render.webgl.TextureReplay");
 goog.require("ol");
 goog.require("ol.extent");
 goog.require("ol.obj");
-goog.require("ol.render.webgl.imagereplay.defaultshader");
+goog.require("ol.render.webgl.texturereplay.defaultshader");
 goog.require("ol.render.webgl.Replay");
 goog.require("ol.webgl");
-goog.require("ol.webgl.Buffer");
 goog.require("ol.webgl.Context");
 if (ol.ENABLE_WEBGL) {
-  ol.render.webgl.ImageReplay = function(tolerance, maxExtent) {
+  ol.render.webgl.TextureReplay = function(tolerance, maxExtent) {
     ol.render.webgl.Replay.call(this, tolerance, maxExtent);
-    this.anchorX_ = undefined;
-    this.anchorY_ = undefined;
-    this.groupIndices_ = [];
-    this.hitDetectionGroupIndices_ = [];
-    this.height_ = undefined;
-    this.images_ = [];
-    this.hitDetectionImages_ = [];
-    this.imageHeight_ = undefined;
-    this.imageWidth_ = undefined;
-    this.defaultLocations_ = null;
-    this.opacity_ = undefined;
-    this.originX_ = undefined;
-    this.originY_ = undefined;
-    this.rotateWithView_ = undefined;
-    this.rotation_ = undefined;
-    this.scale_ = undefined;
-    this.textures_ = [];
-    this.hitDetectionTextures_ = [];
-    this.width_ = undefined;
+    this.anchorX = undefined;
+    this.anchorY = undefined;
+    this.groupIndices = [];
+    this.hitDetectionGroupIndices = [];
+    this.height = undefined;
+    this.imageHeight = undefined;
+    this.imageWidth = undefined;
+    this.defaultLocations = null;
+    this.opacity = undefined;
+    this.originX = undefined;
+    this.originY = undefined;
+    this.rotateWithView = undefined;
+    this.rotation = undefined;
+    this.scale = undefined;
+    this.width = undefined;
   };
-  ol.inherits(ol.render.webgl.ImageReplay, ol.render.webgl.Replay);
-  ol.render.webgl.ImageReplay.prototype.getDeleteResourcesFunction = function(context) {
+  ol.inherits(ol.render.webgl.TextureReplay, ol.render.webgl.Replay);
+  ol.render.webgl.TextureReplay.prototype.getDeleteResourcesFunction = function(context) {
     var verticesBuffer = this.verticesBuffer;
     var indicesBuffer = this.indicesBuffer;
-    var textures = this.textures_;
-    var hitDetectionTextures = this.hitDetectionTextures_;
+    var textures = this.getTextures(true);
     var gl = context.getGL();
     return function() {
       if (!gl.isContextLost()) {
@@ -8350,27 +8348,24 @@ if (ol.ENABLE_WEBGL) {
         for (i = 0, ii = textures.length; i < ii; ++i) {
           gl.deleteTexture(textures[i]);
         }
-        for (i = 0, ii = hitDetectionTextures.length; i < ii; ++i) {
-          gl.deleteTexture(hitDetectionTextures[i]);
-        }
       }
       context.deleteBuffer(verticesBuffer);
       context.deleteBuffer(indicesBuffer);
     };
   };
-  ol.render.webgl.ImageReplay.prototype.drawCoordinates_ = function(flatCoordinates, offset, end, stride) {
-    var anchorX = this.anchorX_;
-    var anchorY = this.anchorY_;
-    var height = this.height_;
-    var imageHeight = this.imageHeight_;
-    var imageWidth = this.imageWidth_;
-    var opacity = this.opacity_;
-    var originX = this.originX_;
-    var originY = this.originY_;
-    var rotateWithView = this.rotateWithView_ ? 1.0 : 0.0;
-    var rotation = -this.rotation_;
-    var scale = this.scale_;
-    var width = this.width_;
+  ol.render.webgl.TextureReplay.prototype.drawCoordinates = function(flatCoordinates, offset, end, stride) {
+    var anchorX = this.anchorX;
+    var anchorY = this.anchorY;
+    var height = this.height;
+    var imageHeight = this.imageHeight;
+    var imageWidth = this.imageWidth;
+    var opacity = this.opacity;
+    var originX = this.originX;
+    var originY = this.originY;
+    var rotateWithView = this.rotateWithView ? 1.0 : 0.0;
+    var rotation = -this.rotation;
+    var scale = this.scale;
+    var width = this.width;
     var cos = Math.cos(rotation);
     var sin = Math.sin(rotation);
     var numIndices = this.indices.length;
@@ -8429,48 +8424,7 @@ if (ol.ENABLE_WEBGL) {
     }
     return numVertices;
   };
-  ol.render.webgl.ImageReplay.prototype.drawMultiPoint = function(multiPointGeometry, feature) {
-    this.startIndices.push(this.indices.length);
-    this.startIndicesFeature.push(feature);
-    var flatCoordinates = multiPointGeometry.getFlatCoordinates();
-    var stride = multiPointGeometry.getStride();
-    this.drawCoordinates_(flatCoordinates, 0, flatCoordinates.length, stride);
-  };
-  ol.render.webgl.ImageReplay.prototype.drawPoint = function(pointGeometry, feature) {
-    this.startIndices.push(this.indices.length);
-    this.startIndicesFeature.push(feature);
-    var flatCoordinates = pointGeometry.getFlatCoordinates();
-    var stride = pointGeometry.getStride();
-    this.drawCoordinates_(flatCoordinates, 0, flatCoordinates.length, stride);
-  };
-  ol.render.webgl.ImageReplay.prototype.finish = function(context) {
-    var gl = context.getGL();
-    this.groupIndices_.push(this.indices.length);
-    this.hitDetectionGroupIndices_.push(this.indices.length);
-    this.verticesBuffer = new ol.webgl.Buffer(this.vertices);
-    var indices = this.indices;
-    this.indicesBuffer = new ol.webgl.Buffer(indices);
-    var texturePerImage = {};
-    this.createTextures_(this.textures_, this.images_, texturePerImage, gl);
-    this.createTextures_(this.hitDetectionTextures_, this.hitDetectionImages_, texturePerImage, gl);
-    this.anchorX_ = undefined;
-    this.anchorY_ = undefined;
-    this.height_ = undefined;
-    this.images_ = null;
-    this.hitDetectionImages_ = null;
-    this.imageHeight_ = undefined;
-    this.imageWidth_ = undefined;
-    this.indices = null;
-    this.opacity_ = undefined;
-    this.originX_ = undefined;
-    this.originY_ = undefined;
-    this.rotateWithView_ = undefined;
-    this.rotation_ = undefined;
-    this.scale_ = undefined;
-    this.vertices = null;
-    this.width_ = undefined;
-  };
-  ol.render.webgl.ImageReplay.prototype.createTextures_ = function(textures, images, texturePerImage, gl) {
+  ol.render.webgl.TextureReplay.prototype.createTextures = function(textures, images, texturePerImage, gl) {
     var texture, image, uid, i;
     var ii = images.length;
     for (i = 0; i < ii; ++i) {
@@ -8485,16 +8439,16 @@ if (ol.ENABLE_WEBGL) {
       textures[i] = texture;
     }
   };
-  ol.render.webgl.ImageReplay.prototype.setUpProgram = function(gl, context, size, pixelRatio) {
-    var fragmentShader = ol.render.webgl.imagereplay.defaultshader.fragment;
-    var vertexShader = ol.render.webgl.imagereplay.defaultshader.vertex;
+  ol.render.webgl.TextureReplay.prototype.setUpProgram = function(gl, context, size, pixelRatio) {
+    var fragmentShader = ol.render.webgl.texturereplay.defaultshader.fragment;
+    var vertexShader = ol.render.webgl.texturereplay.defaultshader.vertex;
     var program = context.getProgram(fragmentShader, vertexShader);
     var locations;
-    if (!this.defaultLocations_) {
-      locations = new ol.render.webgl.imagereplay.defaultshader.Locations(gl, program);
-      this.defaultLocations_ = locations;
+    if (!this.defaultLocations) {
+      locations = new ol.render.webgl.texturereplay.defaultshader.Locations(gl, program);
+      this.defaultLocations = locations;
     } else {
-      locations = this.defaultLocations_;
+      locations = this.defaultLocations;
     }
     context.useProgram(program);
     gl.enableVertexAttribArray(locations.a_position);
@@ -8509,18 +8463,18 @@ if (ol.ENABLE_WEBGL) {
     gl.vertexAttribPointer(locations.a_rotateWithView, 1, ol.webgl.FLOAT, false, 32, 28);
     return locations;
   };
-  ol.render.webgl.ImageReplay.prototype.shutDownProgram = function(gl, locations) {
+  ol.render.webgl.TextureReplay.prototype.shutDownProgram = function(gl, locations) {
     gl.disableVertexAttribArray(locations.a_position);
     gl.disableVertexAttribArray(locations.a_offsets);
     gl.disableVertexAttribArray(locations.a_texCoord);
     gl.disableVertexAttribArray(locations.a_opacity);
     gl.disableVertexAttribArray(locations.a_rotateWithView);
   };
-  ol.render.webgl.ImageReplay.prototype.drawReplay = function(gl, context, skippedFeaturesHash, hitDetection) {
-    var textures = hitDetection ? this.hitDetectionTextures_ : this.textures_;
-    var groupIndices = hitDetection ? this.hitDetectionGroupIndices_ : this.groupIndices_;
+  ol.render.webgl.TextureReplay.prototype.drawReplay = function(gl, context, skippedFeaturesHash, hitDetection) {
+    var textures = hitDetection ? this.getHitDetectionTextures() : this.getTextures();
+    var groupIndices = hitDetection ? this.hitDetectionGroupIndices : this.groupIndices;
     if (!ol.obj.isEmpty(skippedFeaturesHash)) {
-      this.drawReplaySkipping_(gl, context, skippedFeaturesHash, textures, groupIndices);
+      this.drawReplaySkipping(gl, context, skippedFeaturesHash, textures, groupIndices);
     } else {
       var i, ii, start;
       for (i = 0, ii = textures.length, start = 0; i < ii; ++i) {
@@ -8531,7 +8485,7 @@ if (ol.ENABLE_WEBGL) {
       }
     }
   };
-  ol.render.webgl.ImageReplay.prototype.drawReplaySkipping_ = function(gl, context, skippedFeaturesHash, textures, groupIndices) {
+  ol.render.webgl.TextureReplay.prototype.drawReplaySkipping = function(gl, context, skippedFeaturesHash, textures, groupIndices) {
     var featureIndex = 0;
     var i, ii;
     for (i = 0, ii = textures.length; i < ii; ++i) {
@@ -8559,13 +8513,14 @@ if (ol.ENABLE_WEBGL) {
       }
     }
   };
-  ol.render.webgl.ImageReplay.prototype.drawHitDetectionReplayOneByOne = function(gl, context, skippedFeaturesHash, featureCallback, opt_hitExtent) {
+  ol.render.webgl.TextureReplay.prototype.drawHitDetectionReplayOneByOne = function(gl, context, skippedFeaturesHash, featureCallback, opt_hitExtent) {
     var i, groupStart, start, end, feature, featureUid;
     var featureIndex = this.startIndices.length - 1;
-    for (i = this.hitDetectionTextures_.length - 1; i >= 0; --i) {
-      gl.bindTexture(ol.webgl.TEXTURE_2D, this.hitDetectionTextures_[i]);
-      groupStart = i > 0 ? this.hitDetectionGroupIndices_[i - 1] : 0;
-      end = this.hitDetectionGroupIndices_[i];
+    var hitDetectionTextures = this.getHitDetectionTextures();
+    for (i = hitDetectionTextures.length - 1; i >= 0; --i) {
+      gl.bindTexture(ol.webgl.TEXTURE_2D, hitDetectionTextures[i]);
+      groupStart = i > 0 ? this.hitDetectionGroupIndices[i - 1] : 0;
+      end = this.hitDetectionGroupIndices[i];
       while (featureIndex >= 0 && this.startIndices[featureIndex] >= groupStart) {
         start = this.startIndices[featureIndex];
         feature = this.startIndicesFeature[featureIndex];
@@ -8584,6 +8539,68 @@ if (ol.ENABLE_WEBGL) {
     }
     return undefined;
   };
+  ol.render.webgl.TextureReplay.prototype.finish = function(context) {
+    this.anchorX = undefined;
+    this.anchorY = undefined;
+    this.height = undefined;
+    this.imageHeight = undefined;
+    this.imageWidth = undefined;
+    this.indices = null;
+    this.opacity = undefined;
+    this.originX = undefined;
+    this.originY = undefined;
+    this.rotateWithView = undefined;
+    this.rotation = undefined;
+    this.scale = undefined;
+    this.vertices = null;
+    this.width = undefined;
+  };
+  ol.render.webgl.TextureReplay.prototype.getTextures = function(opt_all) {
+  };
+  ol.render.webgl.TextureReplay.prototype.getHitDetectionTextures = function() {
+  };
+}
+;goog.provide("ol.render.webgl.ImageReplay");
+goog.require("ol");
+goog.require("ol.render.webgl.TextureReplay");
+goog.require("ol.webgl.Buffer");
+if (ol.ENABLE_WEBGL) {
+  ol.render.webgl.ImageReplay = function(tolerance, maxExtent) {
+    ol.render.webgl.TextureReplay.call(this, tolerance, maxExtent);
+    this.images_ = [];
+    this.hitDetectionImages_ = [];
+    this.textures_ = [];
+    this.hitDetectionTextures_ = [];
+  };
+  ol.inherits(ol.render.webgl.ImageReplay, ol.render.webgl.TextureReplay);
+  ol.render.webgl.ImageReplay.prototype.drawMultiPoint = function(multiPointGeometry, feature) {
+    this.startIndices.push(this.indices.length);
+    this.startIndicesFeature.push(feature);
+    var flatCoordinates = multiPointGeometry.getFlatCoordinates();
+    var stride = multiPointGeometry.getStride();
+    this.drawCoordinates(flatCoordinates, 0, flatCoordinates.length, stride);
+  };
+  ol.render.webgl.ImageReplay.prototype.drawPoint = function(pointGeometry, feature) {
+    this.startIndices.push(this.indices.length);
+    this.startIndicesFeature.push(feature);
+    var flatCoordinates = pointGeometry.getFlatCoordinates();
+    var stride = pointGeometry.getStride();
+    this.drawCoordinates(flatCoordinates, 0, flatCoordinates.length, stride);
+  };
+  ol.render.webgl.ImageReplay.prototype.finish = function(context) {
+    var gl = context.getGL();
+    this.groupIndices.push(this.indices.length);
+    this.hitDetectionGroupIndices.push(this.indices.length);
+    this.verticesBuffer = new ol.webgl.Buffer(this.vertices);
+    var indices = this.indices;
+    this.indicesBuffer = new ol.webgl.Buffer(indices);
+    var texturePerImage = {};
+    this.createTextures(this.textures_, this.images_, texturePerImage, gl);
+    this.createTextures(this.hitDetectionTextures_, this.hitDetectionImages_, texturePerImage, gl);
+    this.images_ = null;
+    this.hitDetectionImages_ = null;
+    ol.render.webgl.TextureReplay.prototype.finish.call(this, context);
+  };
   ol.render.webgl.ImageReplay.prototype.setImageStyle = function(imageStyle) {
     var anchor = imageStyle.getAnchor();
     var image = imageStyle.getImage(1);
@@ -8601,7 +8618,7 @@ if (ol.ENABLE_WEBGL) {
     } else {
       currentImage = this.images_[this.images_.length - 1];
       if (ol.getUid(currentImage) != ol.getUid(image)) {
-        this.groupIndices_.push(this.indices.length);
+        this.groupIndices.push(this.indices.length);
         this.images_.push(image);
       }
     }
@@ -8610,22 +8627,28 @@ if (ol.ENABLE_WEBGL) {
     } else {
       currentImage = this.hitDetectionImages_[this.hitDetectionImages_.length - 1];
       if (ol.getUid(currentImage) != ol.getUid(hitDetectionImage)) {
-        this.hitDetectionGroupIndices_.push(this.indices.length);
+        this.hitDetectionGroupIndices.push(this.indices.length);
         this.hitDetectionImages_.push(hitDetectionImage);
       }
     }
-    this.anchorX_ = anchor[0];
-    this.anchorY_ = anchor[1];
-    this.height_ = size[1];
-    this.imageHeight_ = imageSize[1];
-    this.imageWidth_ = imageSize[0];
-    this.opacity_ = opacity;
-    this.originX_ = origin[0];
-    this.originY_ = origin[1];
-    this.rotation_ = rotation;
-    this.rotateWithView_ = rotateWithView;
-    this.scale_ = scale;
-    this.width_ = size[0];
+    this.anchorX = anchor[0];
+    this.anchorY = anchor[1];
+    this.height = size[1];
+    this.imageHeight = imageSize[1];
+    this.imageWidth = imageSize[0];
+    this.opacity = opacity;
+    this.originX = origin[0];
+    this.originY = origin[1];
+    this.rotation = rotation;
+    this.rotateWithView = rotateWithView;
+    this.scale = scale;
+    this.width = size[0];
+  };
+  ol.render.webgl.ImageReplay.prototype.getTextures = function(opt_all) {
+    return opt_all ? this.textures_.concat(this.hitDetectionTextures_) : this.textures_;
+  };
+  ol.render.webgl.ImageReplay.prototype.getHitDetectionTextures = function() {
+    return this.hitDetectionTextures_;
   };
 }
 ;goog.provide("ol.geom.flat.reverse");
@@ -8954,14 +8977,17 @@ if (ol.ENABLE_WEBGL) {
   };
   ol.render.webgl.LineStringReplay.prototype.drawMultiLineString = function(multiLineStringGeometry, feature) {
     var indexCount = this.indices.length;
-    var lineStringGeometries = multiLineStringGeometry.getLineStrings();
+    var ends = multiLineStringGeometry.getEnds();
+    ends.unshift(0);
+    var flatCoordinates = multiLineStringGeometry.getFlatCoordinates();
+    var stride = multiLineStringGeometry.getStride();
     var i, ii;
-    for (i = 0, ii = lineStringGeometries.length; i < ii; ++i) {
-      var flatCoordinates = lineStringGeometries[i].getFlatCoordinates();
-      var stride = lineStringGeometries[i].getStride();
-      if (this.isValid_(flatCoordinates, 0, flatCoordinates.length, stride)) {
-        flatCoordinates = ol.geom.flat.transform.translate(flatCoordinates, 0, flatCoordinates.length, stride, -this.origin[0], -this.origin[1]);
-        this.drawCoordinates_(flatCoordinates, 0, flatCoordinates.length, stride);
+    if (ends.length > 1) {
+      for (i = 1, ii = ends.length; i < ii; ++i) {
+        if (this.isValid_(flatCoordinates, ends[i - 1], ends[i], stride)) {
+          var lineString = ol.geom.flat.transform.translate(flatCoordinates, ends[i - 1], ends[i], stride, -this.origin[0], -this.origin[1]);
+          this.drawCoordinates_(lineString, 0, lineString.length, stride);
+        }
       }
     }
     if (this.indices.length > indexCount) {
@@ -9998,6 +10024,12 @@ ol.structs.RBush.prototype.getExtent = function(opt_extent) {
   var data = this.rbush_.data;
   return ol.extent.createOrUpdate(data.minX, data.minY, data.maxX, data.maxY, opt_extent);
 };
+ol.structs.RBush.prototype.concat = function(rbush) {
+  this.rbush_.load(rbush.rbush_.all());
+  for (var i in rbush.items_) {
+    this.items_[i | 0] = rbush.items_[i | 0];
+  }
+};
 goog.provide("ol.render.webgl.PolygonReplay");
 goog.require("ol");
 goog.require("ol.array");
@@ -10034,23 +10066,41 @@ if (ol.ENABLE_WEBGL) {
       var i, ii;
       var holeLists = [];
       for (i = 0, ii = holeFlatCoordinates.length; i < ii; ++i) {
-        var holeList = {list:new ol.structs.LinkedList, maxX:undefined};
+        var holeList = {list:new ol.structs.LinkedList, maxX:undefined, rtree:new ol.structs.RBush};
         holeLists.push(holeList);
-        holeList.maxX = this.processFlatCoordinates_(holeFlatCoordinates[i], stride, holeList.list, rtree, false);
+        holeList.maxX = this.processFlatCoordinates_(holeFlatCoordinates[i], stride, holeList.list, holeList.rtree, false);
       }
       holeLists.sort(function(a, b) {
-        return b.maxX - a.maxX;
+        return b.maxX[0] === a.maxX[0] ? a.maxX[1] - b.maxX[1] : b.maxX[0] - a.maxX[0];
       });
       for (i = 0; i < holeLists.length; ++i) {
-        this.bridgeHole_(holeLists[i].list, holeLists[i].maxX, outerRing, maxX, rtree);
+        var currList = holeLists[i].list;
+        var start = currList.firstItem();
+        var currItem = start;
+        var intersection;
+        do {
+          if (this.getIntersections_(currItem, rtree).length) {
+            intersection = true;
+            break;
+          }
+          currItem = currList.nextItem();
+        } while (start !== currItem);
+        if (!intersection) {
+          this.classifyPoints_(currList, holeLists[i].rtree, true);
+          if (this.bridgeHole_(currList, holeLists[i].maxX[0], outerRing, maxX[0], rtree)) {
+            rtree.concat(holeLists[i].rtree);
+            this.classifyPoints_(outerRing, rtree, false);
+          }
+        }
       }
+    } else {
+      this.classifyPoints_(outerRing, rtree, false);
     }
-    this.classifyPoints_(outerRing, rtree, false);
     this.triangulate_(outerRing, rtree);
   };
   ol.render.webgl.PolygonReplay.prototype.processFlatCoordinates_ = function(flatCoordinates, stride, list, rtree, clockwise) {
     var isClockwise = ol.geom.flat.orient.linearRingIsClockwise(flatCoordinates, 0, flatCoordinates.length, stride);
-    var i, ii, maxX;
+    var i, ii, maxXX, maxXY;
     var n = this.vertices.length / 2;
     var start;
     var p0;
@@ -10060,12 +10110,16 @@ if (ol.ENABLE_WEBGL) {
     if (clockwise === isClockwise) {
       start = this.createPoint_(flatCoordinates[0], flatCoordinates[1], n++);
       p0 = start;
-      maxX = flatCoordinates[0];
+      maxXX = flatCoordinates[0];
+      maxXY = flatCoordinates[1];
       for (i = stride, ii = flatCoordinates.length; i < ii; i += stride) {
         p1 = this.createPoint_(flatCoordinates[i], flatCoordinates[i + 1], n++);
         segments.push(this.insertItem_(p0, p1, list));
         extents.push([Math.min(p0.x, p1.x), Math.min(p0.y, p1.y), Math.max(p0.x, p1.x), Math.max(p0.y, p1.y)]);
-        maxX = flatCoordinates[i] > maxX ? flatCoordinates[i] : maxX;
+        if (flatCoordinates[i] > maxXX) {
+          maxXX = flatCoordinates[i];
+          maxXY = flatCoordinates[i + 1];
+        }
         p0 = p1;
       }
       segments.push(this.insertItem_(p1, start, list));
@@ -10074,19 +10128,23 @@ if (ol.ENABLE_WEBGL) {
       var end = flatCoordinates.length - stride;
       start = this.createPoint_(flatCoordinates[end], flatCoordinates[end + 1], n++);
       p0 = start;
-      maxX = flatCoordinates[end];
+      maxXX = flatCoordinates[end];
+      maxXY = flatCoordinates[end + 1];
       for (i = end - stride, ii = 0; i >= ii; i -= stride) {
         p1 = this.createPoint_(flatCoordinates[i], flatCoordinates[i + 1], n++);
         segments.push(this.insertItem_(p0, p1, list));
         extents.push([Math.min(p0.x, p1.x), Math.min(p0.y, p1.y), Math.max(p0.x, p1.x), Math.max(p0.y, p1.y)]);
-        maxX = flatCoordinates[i] > maxX ? flatCoordinates[i] : maxX;
+        if (flatCoordinates[i] > maxXX) {
+          maxXX = flatCoordinates[i];
+          maxXY = flatCoordinates[i + 1];
+        }
         p0 = p1;
       }
       segments.push(this.insertItem_(p1, start, list));
       extents.push([Math.min(p0.x, p1.x), Math.min(p0.y, p1.y), Math.max(p0.x, p1.x), Math.max(p0.y, p1.y)]);
     }
     rtree.load(extents, segments);
-    return maxX;
+    return [maxXX, maxXY];
   };
   ol.render.webgl.PolygonReplay.prototype.classifyPoints_ = function(list, rtree, ccw) {
     var start = list.firstItem();
@@ -10115,7 +10173,6 @@ if (ol.ENABLE_WEBGL) {
     return pointsReclassified;
   };
   ol.render.webgl.PolygonReplay.prototype.bridgeHole_ = function(hole, holeMaxX, list, listMaxX, rtree) {
-    this.classifyPoints_(hole, rtree, true);
     var seg = hole.firstItem();
     while (seg.p1.x !== holeMaxX) {
       seg = hole.nextItem();
@@ -10128,18 +10185,16 @@ if (ol.ENABLE_WEBGL) {
     var intersectingSegments = this.getIntersections_({p0:p1, p1:p2}, rtree, true);
     for (i = 0, ii = intersectingSegments.length; i < ii; ++i) {
       var currSeg = intersectingSegments[i];
-      if (currSeg.p0.reflex === undefined) {
-        var intersection = this.calculateIntersection_(p1, p2, currSeg.p0, currSeg.p1, true);
-        var dist = Math.abs(p1.x - intersection[0]);
-        if (dist < minDist) {
-          minDist = dist;
-          p5 = {x:intersection[0], y:intersection[1], i:-1};
-          seg = currSeg;
-        }
+      var intersection = this.calculateIntersection_(p1, p2, currSeg.p0, currSeg.p1, true);
+      var dist = Math.abs(p1.x - intersection[0]);
+      if (dist < minDist && ol.render.webgl.triangleIsCounterClockwise(p1.x, p1.y, currSeg.p0.x, currSeg.p0.y, currSeg.p1.x, currSeg.p1.y) !== undefined) {
+        minDist = dist;
+        p5 = {x:intersection[0], y:intersection[1], i:-1};
+        seg = currSeg;
       }
     }
     if (minDist === Infinity) {
-      return;
+      return false;
     }
     bestPoint = seg.p1;
     if (minDist > 0) {
@@ -10157,7 +10212,7 @@ if (ol.ENABLE_WEBGL) {
       }
     }
     seg = list.firstItem();
-    while (seg.p1 !== bestPoint) {
+    while (seg.p1.x !== bestPoint.x || seg.p1.y !== bestPoint.y) {
       seg = list.nextItem();
     }
     var p0Bridge = {x:p1.x, y:p1.y, i:p1.i, reflex:undefined};
@@ -10168,6 +10223,7 @@ if (ol.ENABLE_WEBGL) {
     seg.p1 = p1Bridge;
     hole.setFirstItem();
     list.concat(hole);
+    return true;
   };
   ol.render.webgl.PolygonReplay.prototype.triangulate_ = function(list, rtree) {
     var ccw = false;
@@ -10427,26 +10483,31 @@ if (ol.ENABLE_WEBGL) {
     return p1InCone && p3InCone;
   };
   ol.render.webgl.PolygonReplay.prototype.drawMultiPolygon = function(multiPolygonGeometry, feature) {
-    var polygons = multiPolygonGeometry.getPolygons();
+    var endss = multiPolygonGeometry.getEndss();
     var stride = multiPolygonGeometry.getStride();
     var currIndex = this.indices.length;
     var currLineIndex = this.lineStringReplay.getCurrentIndex();
+    var flatCoordinates = multiPolygonGeometry.getFlatCoordinates();
     var i, ii, j, jj;
-    for (i = 0, ii = polygons.length; i < ii; ++i) {
-      var linearRings = polygons[i].getLinearRings();
-      if (linearRings.length > 0) {
-        var flatCoordinates = linearRings[0].getFlatCoordinates();
-        flatCoordinates = ol.geom.flat.transform.translate(flatCoordinates, 0, flatCoordinates.length, stride, -this.origin[0], -this.origin[1]);
-        var holes = [];
-        var holeFlatCoords;
-        for (j = 1, jj = linearRings.length; j < jj; ++j) {
-          holeFlatCoords = linearRings[j].getFlatCoordinates();
-          holeFlatCoords = ol.geom.flat.transform.translate(holeFlatCoords, 0, holeFlatCoords.length, stride, -this.origin[0], -this.origin[1]);
-          holes.push(holeFlatCoords);
+    var start = 0;
+    for (i = 0, ii = endss.length; i < ii; ++i) {
+      var ends = endss[i];
+      if (ends.length > 0) {
+        var outerRing = ol.geom.flat.transform.translate(flatCoordinates, start, ends[0], stride, -this.origin[0], -this.origin[1]);
+        if (outerRing.length) {
+          var holes = [];
+          var holeFlatCoords;
+          for (j = 1, jj = ends.length; j < jj; ++j) {
+            if (ends[j] !== ends[j - 1]) {
+              holeFlatCoords = ol.geom.flat.transform.translate(flatCoordinates, ends[j - 1], ends[j], stride, -this.origin[0], -this.origin[1]);
+              holes.push(holeFlatCoords);
+            }
+          }
+          this.lineStringReplay.drawPolygonCoordinates(outerRing, holes, stride);
+          this.drawCoordinates_(outerRing, holes, stride);
         }
-        this.lineStringReplay.drawPolygonCoordinates(flatCoordinates, holes, stride);
-        this.drawCoordinates_(flatCoordinates, holes, stride);
       }
+      start = ends[ends.length - 1];
     }
     if (this.indices.length > currIndex) {
       this.startIndices.push(currIndex);
@@ -10461,27 +10522,30 @@ if (ol.ENABLE_WEBGL) {
     }
   };
   ol.render.webgl.PolygonReplay.prototype.drawPolygon = function(polygonGeometry, feature) {
-    var linearRings = polygonGeometry.getLinearRings();
+    var ends = polygonGeometry.getEnds();
     var stride = polygonGeometry.getStride();
-    if (linearRings.length > 0) {
-      this.startIndices.push(this.indices.length);
-      this.startIndicesFeature.push(feature);
-      if (this.state_.changed) {
-        this.styleIndices_.push(this.indices.length);
-        this.state_.changed = false;
+    if (ends.length > 0) {
+      var flatCoordinates = polygonGeometry.getFlatCoordinates().map(Number);
+      var outerRing = ol.geom.flat.transform.translate(flatCoordinates, 0, ends[0], stride, -this.origin[0], -this.origin[1]);
+      if (outerRing.length) {
+        var holes = [];
+        var i, ii, holeFlatCoords;
+        for (i = 1, ii = ends.length; i < ii; ++i) {
+          if (ends[i] !== ends[i - 1]) {
+            holeFlatCoords = ol.geom.flat.transform.translate(flatCoordinates, ends[i - 1], ends[i], stride, -this.origin[0], -this.origin[1]);
+            holes.push(holeFlatCoords);
+          }
+        }
+        this.startIndices.push(this.indices.length);
+        this.startIndicesFeature.push(feature);
+        if (this.state_.changed) {
+          this.styleIndices_.push(this.indices.length);
+          this.state_.changed = false;
+        }
+        this.lineStringReplay.setPolygonStyle(feature);
+        this.lineStringReplay.drawPolygonCoordinates(outerRing, holes, stride);
+        this.drawCoordinates_(outerRing, holes, stride);
       }
-      this.lineStringReplay.setPolygonStyle(feature);
-      var flatCoordinates = linearRings[0].getFlatCoordinates();
-      flatCoordinates = ol.geom.flat.transform.translate(flatCoordinates, 0, flatCoordinates.length, stride, -this.origin[0], -this.origin[1]);
-      var holes = [];
-      var i, ii, holeFlatCoords;
-      for (i = 1, ii = linearRings.length; i < ii; ++i) {
-        holeFlatCoords = linearRings[i].getFlatCoordinates();
-        holeFlatCoords = ol.geom.flat.transform.translate(holeFlatCoords, 0, holeFlatCoords.length, stride, -this.origin[0], -this.origin[1]);
-        holes.push(holeFlatCoords);
-      }
-      this.lineStringReplay.drawPolygonCoordinates(flatCoordinates, holes, stride);
-      this.drawCoordinates_(flatCoordinates, holes, stride);
     }
   };
   ol.render.webgl.PolygonReplay.prototype.finish = function(context) {
@@ -10633,23 +10697,358 @@ if (ol.ENABLE_WEBGL) {
     }
   };
 }
-;goog.provide("ol.render.webgl.TextReplay");
+;goog.provide("ol.style.Atlas");
+goog.require("ol.dom");
+ol.style.Atlas = function(size, space) {
+  this.space_ = space;
+  this.emptyBlocks_ = [{x:0, y:0, width:size, height:size}];
+  this.entries_ = {};
+  this.context_ = ol.dom.createCanvasContext2D(size, size);
+  this.canvas_ = this.context_.canvas;
+};
+ol.style.Atlas.prototype.get = function(id) {
+  return this.entries_[id] || null;
+};
+ol.style.Atlas.prototype.add = function(id, width, height, renderCallback, opt_this) {
+  var block, i, ii;
+  for (i = 0, ii = this.emptyBlocks_.length; i < ii; ++i) {
+    block = this.emptyBlocks_[i];
+    if (block.width >= width + this.space_ && block.height >= height + this.space_) {
+      var entry = {offsetX:block.x + this.space_, offsetY:block.y + this.space_, image:this.canvas_};
+      this.entries_[id] = entry;
+      renderCallback.call(opt_this, this.context_, block.x + this.space_, block.y + this.space_);
+      this.split_(i, block, width + this.space_, height + this.space_);
+      return entry;
+    }
+  }
+  return null;
+};
+ol.style.Atlas.prototype.split_ = function(index, block, width, height) {
+  var deltaWidth = block.width - width;
+  var deltaHeight = block.height - height;
+  var newBlock1;
+  var newBlock2;
+  if (deltaWidth > deltaHeight) {
+    newBlock1 = {x:block.x + width, y:block.y, width:block.width - width, height:block.height};
+    newBlock2 = {x:block.x, y:block.y + height, width:width, height:block.height - height};
+    this.updateBlocks_(index, newBlock1, newBlock2);
+  } else {
+    newBlock1 = {x:block.x + width, y:block.y, width:block.width - width, height:height};
+    newBlock2 = {x:block.x, y:block.y + height, width:block.width, height:block.height - height};
+    this.updateBlocks_(index, newBlock1, newBlock2);
+  }
+};
+ol.style.Atlas.prototype.updateBlocks_ = function(index, newBlock1, newBlock2) {
+  var args = [index, 1];
+  if (newBlock1.width > 0 && newBlock1.height > 0) {
+    args.push(newBlock1);
+  }
+  if (newBlock2.width > 0 && newBlock2.height > 0) {
+    args.push(newBlock2);
+  }
+  this.emptyBlocks_.splice.apply(this.emptyBlocks_, args);
+};
+goog.provide("ol.style.AtlasManager");
 goog.require("ol");
+goog.require("ol.style.Atlas");
+ol.style.AtlasManager = function(opt_options) {
+  var options = opt_options || {};
+  this.currentSize_ = options.initialSize !== undefined ? options.initialSize : ol.INITIAL_ATLAS_SIZE;
+  this.maxSize_ = options.maxSize !== undefined ? options.maxSize : ol.MAX_ATLAS_SIZE != -1 ? ol.MAX_ATLAS_SIZE : ol.WEBGL_MAX_TEXTURE_SIZE !== undefined ? ol.WEBGL_MAX_TEXTURE_SIZE : 2048;
+  this.space_ = options.space !== undefined ? options.space : 1;
+  this.atlases_ = [new ol.style.Atlas(this.currentSize_, this.space_)];
+  this.currentHitSize_ = this.currentSize_;
+  this.hitAtlases_ = [new ol.style.Atlas(this.currentHitSize_, this.space_)];
+};
+ol.style.AtlasManager.prototype.getInfo = function(id) {
+  var info = this.getInfo_(this.atlases_, id);
+  if (!info) {
+    return null;
+  }
+  var hitInfo = this.getInfo_(this.hitAtlases_, id);
+  return this.mergeInfos_(info, hitInfo);
+};
+ol.style.AtlasManager.prototype.getInfo_ = function(atlases, id) {
+  var atlas, info, i, ii;
+  for (i = 0, ii = atlases.length; i < ii; ++i) {
+    atlas = atlases[i];
+    info = atlas.get(id);
+    if (info) {
+      return info;
+    }
+  }
+  return null;
+};
+ol.style.AtlasManager.prototype.mergeInfos_ = function(info, hitInfo) {
+  return {offsetX:info.offsetX, offsetY:info.offsetY, image:info.image, hitImage:hitInfo.image};
+};
+ol.style.AtlasManager.prototype.add = function(id, width, height, renderCallback, opt_renderHitCallback, opt_this) {
+  if (width + this.space_ > this.maxSize_ || height + this.space_ > this.maxSize_) {
+    return null;
+  }
+  var info = this.add_(false, id, width, height, renderCallback, opt_this);
+  if (!info) {
+    return null;
+  }
+  var renderHitCallback = opt_renderHitCallback !== undefined ? opt_renderHitCallback : ol.nullFunction;
+  var hitInfo = this.add_(true, id, width, height, renderHitCallback, opt_this);
+  return this.mergeInfos_(info, hitInfo);
+};
+ol.style.AtlasManager.prototype.add_ = function(isHitAtlas, id, width, height, renderCallback, opt_this) {
+  var atlases = isHitAtlas ? this.hitAtlases_ : this.atlases_;
+  var atlas, info, i, ii;
+  for (i = 0, ii = atlases.length; i < ii; ++i) {
+    atlas = atlases[i];
+    info = atlas.add(id, width, height, renderCallback, opt_this);
+    if (info) {
+      return info;
+    } else {
+      if (!info && i === ii - 1) {
+        var size;
+        if (isHitAtlas) {
+          size = Math.min(this.currentHitSize_ * 2, this.maxSize_);
+          this.currentHitSize_ = size;
+        } else {
+          size = Math.min(this.currentSize_ * 2, this.maxSize_);
+          this.currentSize_ = size;
+        }
+        atlas = new ol.style.Atlas(size, this.space_);
+        atlases.push(atlas);
+        ++ii;
+      }
+    }
+  }
+  return null;
+};
+goog.provide("ol.render.webgl.TextReplay");
+goog.require("ol");
+goog.require("ol.colorlike");
+goog.require("ol.dom");
+goog.require("ol.has");
+goog.require("ol.render.webgl");
+goog.require("ol.render.webgl.TextureReplay");
+goog.require("ol.style.AtlasManager");
+goog.require("ol.webgl.Buffer");
 if (ol.ENABLE_WEBGL) {
   ol.render.webgl.TextReplay = function(tolerance, maxExtent) {
+    ol.render.webgl.TextureReplay.call(this, tolerance, maxExtent);
+    this.images_ = [];
+    this.textures_ = [];
+    this.measureCanvas_ = ol.dom.createCanvasContext2D(0, 0).canvas;
+    this.state_ = {strokeColor:null, lineCap:undefined, lineDash:null, lineDashOffset:undefined, lineJoin:undefined, lineWidth:0, miterLimit:undefined, fillColor:null, font:undefined, scale:undefined};
+    this.text_ = "";
+    this.textAlign_ = undefined;
+    this.textBaseline_ = undefined;
+    this.offsetX_ = undefined;
+    this.offsetY_ = undefined;
+    this.atlases_ = {};
+    this.currAtlas_ = undefined;
+    this.scale = 1;
+    this.opacity = 1;
   };
-  ol.render.webgl.TextReplay.prototype.setTextStyle = function(textStyle) {
-  };
-  ol.render.webgl.TextReplay.prototype.replay = function(context, center, resolution, rotation, size, pixelRatio, opacity, skippedFeaturesHash, featureCallback, oneByOne, opt_hitExtent) {
-    return undefined;
-  };
+  ol.inherits(ol.render.webgl.TextReplay, ol.render.webgl.TextureReplay);
   ol.render.webgl.TextReplay.prototype.drawText = function(flatCoordinates, offset, end, stride, geometry, feature) {
+    if (this.text_) {
+      this.startIndices.push(this.indices.length);
+      this.startIndicesFeature.push(feature);
+      var glyphAtlas = this.currAtlas_;
+      var lines = this.text_.split("\n");
+      var textSize = this.getTextSize_(lines);
+      var i, ii, j, jj, currX, currY, charArr, charInfo;
+      var anchorX = Math.round(textSize[0] * this.textAlign_ + this.offsetX_);
+      var anchorY = Math.round(textSize[1] * this.textBaseline_ + this.offsetY_);
+      var lineWidth = this.state_.lineWidth / 2 * this.state_.scale;
+      for (i = 0, ii = lines.length; i < ii; ++i) {
+        currX = 0;
+        currY = glyphAtlas.height * i;
+        charArr = lines[i].split("");
+        for (j = 0, jj = charArr.length; j < jj; ++j) {
+          charInfo = glyphAtlas.atlas.getInfo(charArr[j]);
+          if (charInfo) {
+            var image = charInfo.image;
+            this.anchorX = anchorX - currX;
+            this.anchorY = anchorY - currY;
+            this.originX = j === 0 ? charInfo.offsetX - lineWidth : charInfo.offsetX;
+            this.originY = charInfo.offsetY;
+            this.height = glyphAtlas.height;
+            this.width = j === 0 || j === charArr.length - 1 ? glyphAtlas.width[charArr[j]] + lineWidth : glyphAtlas.width[charArr[j]];
+            this.imageHeight = image.height;
+            this.imageWidth = image.width;
+            var currentImage;
+            if (this.images_.length === 0) {
+              this.images_.push(image);
+            } else {
+              currentImage = this.images_[this.images_.length - 1];
+              if (ol.getUid(currentImage) != ol.getUid(image)) {
+                this.groupIndices.push(this.indices.length);
+                this.images_.push(image);
+              }
+            }
+            this.drawText_(flatCoordinates, offset, end, stride);
+          }
+          currX += this.width;
+        }
+      }
+    }
+  };
+  ol.render.webgl.TextReplay.prototype.getTextSize_ = function(lines) {
+    var self = this;
+    var glyphAtlas = this.currAtlas_;
+    var textHeight = lines.length * glyphAtlas.height;
+    var textWidth = lines.map(function(str) {
+      var sum = 0;
+      var i, ii;
+      for (i = 0, ii = str.length; i < ii; ++i) {
+        var curr = str[i];
+        if (!glyphAtlas.width[curr]) {
+          self.addCharToAtlas_(curr);
+        }
+        sum += glyphAtlas.width[curr] ? glyphAtlas.width[curr] : 0;
+      }
+      return sum;
+    }).reduce(function(max, curr) {
+      return Math.max(max, curr);
+    });
+    return [textWidth, textHeight];
+  };
+  ol.render.webgl.TextReplay.prototype.drawText_ = function(flatCoordinates, offset, end, stride) {
+    var i, ii;
+    for (i = offset, ii = end; i < ii; i += stride) {
+      this.drawCoordinates(flatCoordinates, offset, end, stride);
+    }
+  };
+  ol.render.webgl.TextReplay.prototype.addCharToAtlas_ = function(char) {
+    if (char.length === 1) {
+      var glyphAtlas = this.currAtlas_;
+      var state = this.state_;
+      var mCtx = this.measureCanvas_.getContext("2d");
+      mCtx.font = state.font;
+      var width = Math.ceil(mCtx.measureText(char).width * state.scale);
+      var info = glyphAtlas.atlas.add(char, width, glyphAtlas.height, function(ctx, x, y) {
+        ctx.font = state.font;
+        ctx.fillStyle = state.fillColor;
+        ctx.strokeStyle = state.strokeColor;
+        ctx.lineWidth = state.lineWidth;
+        ctx.lineCap = state.lineCap;
+        ctx.lineJoin = state.lineJoin;
+        ctx.miterLimit = state.miterLimit;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        if (ol.has.CANVAS_LINE_DASH && state.lineDash) {
+          ctx.setLineDash(state.lineDash);
+          ctx.lineDashOffset = state.lineDashOffset;
+        }
+        if (state.scale !== 1) {
+          ctx.setTransform(state.scale, 0, 0, state.scale, 0, 0);
+        }
+        if (state.strokeColor) {
+          ctx.strokeText(char, x, y);
+        }
+        if (state.fillColor) {
+          ctx.fillText(char, x, y);
+        }
+      });
+      if (info) {
+        glyphAtlas.width[char] = width;
+      }
+    }
   };
   ol.render.webgl.TextReplay.prototype.finish = function(context) {
+    var gl = context.getGL();
+    this.groupIndices.push(this.indices.length);
+    this.hitDetectionGroupIndices = this.groupIndices;
+    this.verticesBuffer = new ol.webgl.Buffer(this.vertices);
+    this.indicesBuffer = new ol.webgl.Buffer(this.indices);
+    var texturePerImage = {};
+    this.createTextures(this.textures_, this.images_, texturePerImage, gl);
+    this.state_ = {strokeColor:null, lineCap:undefined, lineDash:null, lineDashOffset:undefined, lineJoin:undefined, lineWidth:0, miterLimit:undefined, fillColor:null, font:undefined, scale:undefined};
+    this.text_ = "";
+    this.textAlign_ = undefined;
+    this.textBaseline_ = undefined;
+    this.offsetX_ = undefined;
+    this.offsetY_ = undefined;
+    this.images_ = null;
+    this.atlases_ = {};
+    this.currAtlas_ = undefined;
+    ol.render.webgl.TextureReplay.prototype.finish.call(this, context);
   };
-  ol.render.webgl.TextReplay.prototype.getDeleteResourcesFunction = function(context) {
-    return ol.nullFunction;
+  ol.render.webgl.TextReplay.prototype.setTextStyle = function(textStyle) {
+    var state = this.state_;
+    var textFillStyle = textStyle.getFill();
+    var textStrokeStyle = textStyle.getStroke();
+    if (!textStyle || !textStyle.getText() || !textFillStyle && !textStrokeStyle) {
+      this.text_ = "";
+    } else {
+      if (!textFillStyle) {
+        state.fillColor = null;
+      } else {
+        var textFillStyleColor = textFillStyle.getColor();
+        state.fillColor = ol.colorlike.asColorLike(textFillStyleColor ? textFillStyleColor : ol.render.webgl.defaultFillStyle);
+      }
+      if (!textStrokeStyle) {
+        state.strokeColor = null;
+        state.lineWidth = 0;
+      } else {
+        var textStrokeStyleColor = textStrokeStyle.getColor();
+        state.strokeColor = ol.colorlike.asColorLike(textStrokeStyleColor ? textStrokeStyleColor : ol.render.webgl.defaultStrokeStyle);
+        state.lineWidth = textStrokeStyle.getWidth() || ol.render.webgl.defaultLineWidth;
+        state.lineCap = textStrokeStyle.getLineCap() || ol.render.webgl.defaultLineCap;
+        state.lineDashOffset = textStrokeStyle.getLineDashOffset() || ol.render.webgl.defaultLineDashOffset;
+        state.lineJoin = textStrokeStyle.getLineJoin() || ol.render.webgl.defaultLineJoin;
+        state.miterLimit = textStrokeStyle.getMiterLimit() || ol.render.webgl.defaultMiterLimit;
+        var lineDash = textStrokeStyle.getLineDash();
+        state.lineDash = lineDash ? lineDash.slice() : ol.render.webgl.defaultLineDash;
+      }
+      state.font = textStyle.getFont() || ol.render.webgl.defaultFont;
+      state.scale = textStyle.getScale() || 1;
+      this.text_ = textStyle.getText();
+      var textAlign = ol.render.webgl.TextReplay.Align_[textStyle.getTextAlign()];
+      var textBaseline = ol.render.webgl.TextReplay.Align_[textStyle.getTextBaseline()];
+      this.textAlign_ = textAlign === undefined ? ol.render.webgl.defaultTextAlign : textAlign;
+      this.textBaseline_ = textBaseline === undefined ? ol.render.webgl.defaultTextBaseline : textBaseline;
+      this.offsetX_ = textStyle.getOffsetX() || 0;
+      this.offsetY_ = textStyle.getOffsetY() || 0;
+      this.rotateWithView = !!textStyle.getRotateWithView();
+      this.rotation = textStyle.getRotation() || 0;
+      this.currAtlas_ = this.getAtlas_(state);
+    }
   };
+  ol.render.webgl.TextReplay.prototype.getAtlas_ = function(state) {
+    var params = [];
+    var i;
+    for (i in state) {
+      if (state[i] || state[i] === 0) {
+        if (Array.isArray(state[i])) {
+          params = params.concat(state[i]);
+        } else {
+          params.push(state[i]);
+        }
+      }
+    }
+    var hash = this.calculateHash_(params);
+    if (!this.atlases_[hash]) {
+      var mCtx = this.measureCanvas_.getContext("2d");
+      mCtx.font = state.font;
+      var height = Math.ceil((mCtx.measureText("M").width * 1.5 + state.lineWidth / 2) * state.scale);
+      this.atlases_[hash] = {atlas:new ol.style.AtlasManager({space:state.lineWidth + 1}), width:{}, height:height};
+    }
+    return this.atlases_[hash];
+  };
+  ol.render.webgl.TextReplay.prototype.calculateHash_ = function(params) {
+    var i, ii;
+    var hash = "";
+    for (i = 0, ii = params.length; i < ii; ++i) {
+      hash += params[i];
+    }
+    return hash;
+  };
+  ol.render.webgl.TextReplay.prototype.getTextures = function(opt_all) {
+    return this.textures_;
+  };
+  ol.render.webgl.TextReplay.prototype.getHitDetectionTextures = function() {
+    return this.textures_;
+  };
+  ol.render.webgl.TextReplay.Align_ = {left:0, end:0, center:0.5, right:1, start:1, top:0, middle:0.5, hanging:0.2, alphabetic:0.8, ideographic:0.8, bottom:1};
 }
 ;goog.provide("ol.render.webgl.ReplayGroup");
 goog.require("ol");
@@ -11481,6 +11880,7 @@ goog.provide("ol.ImageTile");
 goog.require("ol");
 goog.require("ol.Tile");
 goog.require("ol.TileState");
+goog.require("ol.dom");
 goog.require("ol.events");
 goog.require("ol.events.EventType");
 ol.ImageTile = function(tileCoord, state, src, crossOrigin, tileLoadFunction) {
@@ -11497,6 +11897,7 @@ ol.inherits(ol.ImageTile, ol.Tile);
 ol.ImageTile.prototype.disposeInternal = function() {
   if (this.state == ol.TileState.LOADING) {
     this.unlistenImage_();
+    this.image_.src = ol.ImageTile.blankImage.toDataURL("image/png");
   }
   if (this.interimTile) {
     this.interimTile.dispose();
@@ -11513,8 +11914,8 @@ ol.ImageTile.prototype.getKey = function() {
 };
 ol.ImageTile.prototype.handleImageError_ = function() {
   this.state = ol.TileState.ERROR;
-  this.image_ = ol.ImageTile.blankImage;
   this.unlistenImage_();
+  this.image_ = ol.ImageTile.blankImage;
   this.changed();
 };
 ol.ImageTile.prototype.handleImageLoad_ = function() {
@@ -11538,8 +11939,12 @@ ol.ImageTile.prototype.unlistenImage_ = function() {
   this.imageListenerKeys_.forEach(ol.events.unlistenByKey);
   this.imageListenerKeys_ = null;
 };
-ol.ImageTile.blankImage = new Image;
-ol.ImageTile.blankImage.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+ol.ImageTile.blankImage = function() {
+  var ctx = ol.dom.createCanvasContext2D(1, 1);
+  ctx.fillStyle = "rgba(0,0,0,0)";
+  ctx.fillRect(0, 0, 1, 1);
+  return ctx.canvas;
+}();
 goog.provide("ol.structs.LRUCache");
 goog.require("ol.asserts");
 ol.structs.LRUCache = function() {
@@ -11679,9 +12084,12 @@ ol.reproj.calculateSourceResolution = function(sourceProj, targetProj, targetCen
   if (sourceMetersPerUnit !== undefined) {
     sourceResolution /= sourceMetersPerUnit;
   }
-  var compensationFactor = ol.proj.getPointResolution(sourceProj, sourceResolution, sourceCenter) / sourceResolution;
-  if (isFinite(compensationFactor) && compensationFactor > 0) {
-    sourceResolution /= compensationFactor;
+  var sourceExtent = sourceProj.getExtent();
+  if (!sourceExtent || ol.extent.containsCoordinate(sourceExtent, sourceCenter)) {
+    var compensationFactor = ol.proj.getPointResolution(sourceProj, sourceResolution, sourceCenter) / sourceResolution;
+    if (isFinite(compensationFactor) && compensationFactor > 0) {
+      sourceResolution /= compensationFactor;
+    }
   }
   return sourceResolution;
 };
@@ -16292,7 +16700,7 @@ ol.style.RegularShape = function(options) {
   this.origin_ = [0, 0];
   this.points_ = options.points;
   this.radius_ = options.radius !== undefined ? options.radius : options.radius1;
-  this.radius2_ = options.radius2 !== undefined ? options.radius2 : this.radius_;
+  this.radius2_ = options.radius2;
   this.angle_ = options.angle !== undefined ? options.angle : 0;
   this.stroke_ = options.stroke !== undefined ? options.stroke : null;
   this.anchor_ = null;
@@ -16307,7 +16715,7 @@ ol.style.RegularShape = function(options) {
 };
 ol.inherits(ol.style.RegularShape, ol.style.Image);
 ol.style.RegularShape.prototype.clone = function() {
-  var style = new ol.style.RegularShape({fill:this.getFill() ? this.getFill().clone() : undefined, points:this.getRadius2() !== this.getRadius() ? this.getPoints() / 2 : this.getPoints(), radius:this.getRadius(), radius2:this.getRadius2(), angle:this.getAngle(), snapToPixel:this.getSnapToPixel(), stroke:this.getStroke() ? this.getStroke().clone() : undefined, rotation:this.getRotation(), rotateWithView:this.getRotateWithView(), atlasManager:this.atlasManager_});
+  var style = new ol.style.RegularShape({fill:this.getFill() ? this.getFill().clone() : undefined, points:this.getPoints(), radius:this.getRadius(), radius2:this.getRadius2(), angle:this.getAngle(), snapToPixel:this.getSnapToPixel(), stroke:this.getStroke() ? this.getStroke().clone() : undefined, rotation:this.getRotation(), rotateWithView:this.getRotateWithView(), atlasManager:this.atlasManager_});
   style.setOpacity(this.getOpacity());
   style.setScale(this.getScale());
   return style;
@@ -16433,15 +16841,17 @@ ol.style.RegularShape.prototype.draw_ = function(renderOptions, context, x, y) {
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.translate(x, y);
   context.beginPath();
-  if (this.points_ === Infinity) {
+  var points = this.points_;
+  if (points === Infinity) {
     context.arc(renderOptions.size / 2, renderOptions.size / 2, this.radius_, 0, 2 * Math.PI, true);
   } else {
-    if (this.radius2_ !== this.radius_) {
-      this.points_ = 2 * this.points_;
+    var radius2 = this.radius2_ !== undefined ? this.radius2_ : this.radius_;
+    if (radius2 !== this.radius_) {
+      points = 2 * points;
     }
-    for (i = 0; i <= this.points_; i++) {
-      angle0 = i * 2 * Math.PI / this.points_ - Math.PI / 2 + this.angle_;
-      radiusC = i % 2 === 0 ? this.radius_ : this.radius2_;
+    for (i = 0; i <= points; i++) {
+      angle0 = i * 2 * Math.PI / points - Math.PI / 2 + this.angle_;
+      radiusC = i % 2 === 0 ? this.radius_ : radius2;
       context.lineTo(renderOptions.size / 2 + radiusC * Math.cos(angle0), renderOptions.size / 2 + radiusC * Math.sin(angle0));
     }
   }
@@ -16480,16 +16890,18 @@ ol.style.RegularShape.prototype.drawHitDetectionCanvas_ = function(renderOptions
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.translate(x, y);
   context.beginPath();
-  if (this.points_ === Infinity) {
+  var points = this.points_;
+  if (points === Infinity) {
     context.arc(renderOptions.size / 2, renderOptions.size / 2, this.radius_, 0, 2 * Math.PI, true);
   } else {
-    if (this.radius2_ !== this.radius_) {
-      this.points_ = 2 * this.points_;
+    var radius2 = this.radius2_ !== undefined ? this.radius2_ : this.radius_;
+    if (radius2 !== this.radius_) {
+      points = 2 * points;
     }
     var i, radiusC, angle0;
-    for (i = 0; i <= this.points_; i++) {
-      angle0 = i * 2 * Math.PI / this.points_ - Math.PI / 2 + this.angle_;
-      radiusC = i % 2 === 0 ? this.radius_ : this.radius2_;
+    for (i = 0; i <= points; i++) {
+      angle0 = i * 2 * Math.PI / points - Math.PI / 2 + this.angle_;
+      radiusC = i % 2 === 0 ? this.radius_ : radius2;
       context.lineTo(renderOptions.size / 2 + radiusC * Math.cos(angle0), renderOptions.size / 2 + radiusC * Math.sin(angle0));
     }
   }
@@ -17285,14 +17697,8 @@ ol.CenterConstraint.createExtent = function(extent) {
 ol.CenterConstraint.none = function(center) {
   return center;
 };
-goog.provide("ol.Constraints");
-ol.Constraints = function(centerConstraint, resolutionConstraint, rotationConstraint) {
-  this.center = centerConstraint;
-  this.resolution = resolutionConstraint;
-  this.rotation = rotationConstraint;
-};
 goog.provide("ol.MapEventType");
-ol.MapEventType = {POSTRENDER:"postrender", MOVEEND:"moveend"};
+ol.MapEventType = {POSTRENDER:"postrender", MOVESTART:"movestart", MOVEEND:"moveend"};
 goog.provide("ol.control.Control");
 goog.require("ol");
 goog.require("ol.MapEventType");
@@ -17937,7 +18343,7 @@ ol.control.MousePosition = function(opt_options) {
     this.setCoordinateFormat(options.coordinateFormat);
   }
   if (options.projection) {
-    this.setProjection(ol.proj.get(options.projection));
+    this.setProjection(options.projection);
   }
   this.undefinedHTML_ = options.undefinedHTML !== undefined ? options.undefinedHTML : "";
   this.renderedHTML_ = element.innerHTML;
@@ -17987,7 +18393,7 @@ ol.control.MousePosition.prototype.setCoordinateFormat = function(format) {
   this.set(ol.control.MousePosition.Property_.COORDINATE_FORMAT, format);
 };
 ol.control.MousePosition.prototype.setProjection = function(projection) {
-  this.set(ol.control.MousePosition.Property_.PROJECTION, projection);
+  this.set(ol.control.MousePosition.Property_.PROJECTION, ol.proj.get(projection));
 };
 ol.control.MousePosition.prototype.updateHTML_ = function(pixel) {
   var html = this.undefinedHTML_;
@@ -18949,16 +19355,25 @@ ol.TileQueue.prototype.handleTileChange = function(event) {
 };
 ol.TileQueue.prototype.loadMoreTiles = function(maxTotalLoading, maxNewLoads) {
   var newLoads = 0;
-  var tile, tileKey;
+  var abortedTiles = false;
+  var state, tile, tileKey;
   while (this.tilesLoading_ < maxTotalLoading && newLoads < maxNewLoads && this.getCount() > 0) {
     tile = this.dequeue()[0];
     tileKey = tile.getKey();
-    if (tile.getState() === ol.TileState.IDLE && !(tileKey in this.tilesLoadingKeys_)) {
-      this.tilesLoadingKeys_[tileKey] = true;
-      ++this.tilesLoading_;
-      ++newLoads;
-      tile.load();
+    state = tile.getState();
+    if (state === ol.TileState.ABORT) {
+      abortedTiles = true;
+    } else {
+      if (state === ol.TileState.IDLE && !(tileKey in this.tilesLoadingKeys_)) {
+        this.tilesLoadingKeys_[tileKey] = true;
+        ++this.tilesLoading_;
+        ++newLoads;
+        tile.load();
+      }
     }
+  }
+  if (newLoads === 0 && abortedTiles) {
+    this.tileChangeCallback_();
   }
 };
 goog.provide("ol.ResolutionConstraint");
@@ -19737,7 +20152,6 @@ ol.geom.Polygon.makeRegular = function(polygon, center, radius, opt_angle) {
 goog.provide("ol.View");
 goog.require("ol");
 goog.require("ol.CenterConstraint");
-goog.require("ol.Constraints");
 goog.require("ol.Object");
 goog.require("ol.ResolutionConstraint");
 goog.require("ol.RotationConstraint");
@@ -19751,6 +20165,7 @@ goog.require("ol.extent");
 goog.require("ol.geom.GeometryType");
 goog.require("ol.geom.Polygon");
 goog.require("ol.geom.SimpleGeometry");
+goog.require("ol.math");
 goog.require("ol.obj");
 goog.require("ol.proj");
 goog.require("ol.proj.Units");
@@ -19777,7 +20192,7 @@ ol.View.prototype.applyOptions_ = function(options) {
   var centerConstraint = ol.View.createCenterConstraint_(options);
   var resolutionConstraint = resolutionConstraintInfo.constraint;
   var rotationConstraint = ol.View.createRotationConstraint_(options);
-  this.constraints_ = new ol.Constraints(centerConstraint, resolutionConstraint, rotationConstraint);
+  this.constraints_ = {center:centerConstraint, resolution:resolutionConstraint, rotation:rotationConstraint};
   if (options.resolution !== undefined) {
     properties[ol.ViewProperty.RESOLUTION] = options.resolution;
   } else {
@@ -19833,7 +20248,8 @@ ol.View.prototype.animate = function(var_args) {
     }
     if (options.rotation !== undefined) {
       animation.sourceRotation = rotation;
-      animation.targetRotation = options.rotation;
+      var delta = ol.math.modulo(options.rotation - rotation + Math.PI, 2 * Math.PI) - Math.PI;
+      animation.targetRotation = rotation + delta;
       rotation = animation.targetRotation;
     }
     animation.callback = callback;
@@ -19976,6 +20392,9 @@ ol.View.prototype.constrainRotation = function(rotation, opt_delta) {
 ol.View.prototype.getCenter = function() {
   return this.get(ol.ViewProperty.CENTER);
 };
+ol.View.prototype.getConstraints = function() {
+  return this.constraints_;
+};
 ol.View.prototype.getHints = function(opt_hints) {
   if (opt_hints !== undefined) {
     opt_hints[0] = this.hints_[0];
@@ -20086,6 +20505,9 @@ ol.View.prototype.getZoomForResolution = function(resolution) {
     zoom = offset + Math.log(max / resolution) / Math.log(zoomFactor);
   }
   return zoom;
+};
+ol.View.prototype.getResolutionForZoom = function(zoom) {
+  return this.constrainResolution(this.maxResolution_, zoom - this.minZoom_, 0);
 };
 ol.View.prototype.fit = function(geometryOrExtent, opt_options) {
   var options = opt_options || {};
@@ -20211,8 +20633,7 @@ ol.View.prototype.setRotation = function(rotation) {
   }
 };
 ol.View.prototype.setZoom = function(zoom) {
-  var resolution = this.constrainResolution(this.maxResolution_, zoom - this.minZoom_, 0);
-  this.setResolution(resolution);
+  this.setResolution(this.getResolutionForZoom(zoom));
 };
 ol.View.createCenterConstraint_ = function(options) {
   if (options.extent !== undefined) {
@@ -20318,6 +20739,9 @@ ol.Kinetic.prototype.end = function() {
     firstIndex -= 3;
   }
   var duration = this.points_[lastIndex + 2] - this.points_[firstIndex + 2];
+  if (duration < 1000 / 60) {
+    return false;
+  }
   var dx = this.points_[lastIndex] - this.points_[firstIndex];
   var dy = this.points_[lastIndex + 1] - this.points_[firstIndex + 1];
   this.angle_ = Math.atan2(dy, dx);
@@ -20670,6 +21094,7 @@ ol.interaction.DragPan.handleDownEvent_ = function(mapBrowserEvent) {
 ol.interaction.DragPan.prototype.shouldStopEvent = ol.functions.FALSE;
 goog.provide("ol.interaction.DragRotate");
 goog.require("ol");
+goog.require("ol.RotationConstraint");
 goog.require("ol.ViewHint");
 goog.require("ol.events.condition");
 goog.require("ol.functions");
@@ -20688,12 +21113,15 @@ ol.interaction.DragRotate.handleDragEvent_ = function(mapBrowserEvent) {
     return;
   }
   var map = mapBrowserEvent.map;
+  var view = map.getView();
+  if (view.getConstraints().rotation === ol.RotationConstraint.disable) {
+    return;
+  }
   var size = map.getSize();
   var offset = mapBrowserEvent.pixel;
   var theta = Math.atan2(size[1] / 2 - offset[1], offset[0] - size[0] / 2);
   if (this.lastAngle_ !== undefined) {
     var delta = theta - this.lastAngle_;
-    var view = map.getView();
     var rotation = view.getRotation();
     ol.interaction.Interaction.rotateWithoutConstraints(view, rotation - delta);
   }
@@ -21100,6 +21528,7 @@ goog.require("ol.ViewHint");
 goog.require("ol.functions");
 goog.require("ol.interaction.Interaction");
 goog.require("ol.interaction.Pointer");
+goog.require("ol.RotationConstraint");
 ol.interaction.PinchRotate = function(opt_options) {
   ol.interaction.Pointer.call(this, {handleDownEvent:ol.interaction.PinchRotate.handleDownEvent_, handleDragEvent:ol.interaction.PinchRotate.handleDragEvent_, handleUpEvent:ol.interaction.PinchRotate.handleUpEvent_});
   var options = opt_options || {};
@@ -21126,13 +21555,16 @@ ol.interaction.PinchRotate.handleDragEvent_ = function(mapBrowserEvent) {
   }
   this.lastAngle_ = angle;
   var map = mapBrowserEvent.map;
+  var view = map.getView();
+  if (view.getConstraints().rotation === ol.RotationConstraint.disable) {
+    return;
+  }
   var viewportPosition = map.getViewport().getBoundingClientRect();
   var centroid = ol.interaction.Pointer.centroid(this.targetPointers);
   centroid[0] -= viewportPosition.left;
   centroid[1] -= viewportPosition.top;
   this.anchor_ = map.getCoordinateFromPixel(centroid);
   if (this.rotating_) {
-    var view = map.getView();
     var rotation = view.getRotation();
     map.render();
     ol.interaction.Interaction.rotateWithoutConstraints(view, rotation + rotationDelta, this.anchor_);
@@ -21974,7 +22406,7 @@ ol.Map = function(options) {
   this.pixelToCoordinateTransform_ = ol.transform.create();
   this.frameIndex_ = 0;
   this.frameState_ = null;
-  this.previousExtent_ = ol.extent.createEmpty();
+  this.previousExtent_ = null;
   this.viewPropertyListenerKey_ = null;
   this.viewChangeListenerKey_ = null;
   this.layerGroupPropertyListenerKeys_ = null;
@@ -22353,6 +22785,7 @@ ol.Map.prototype.renderFrame_ = function(time) {
   var size = this.getSize();
   var view = this.getView();
   var extent = ol.extent.createEmpty();
+  var previousFrameState = this.frameState_;
   var frameState = null;
   if (size !== undefined && ol.size.hasArea(size) && view && view.isDef()) {
     var viewHints = view.getHints(this.frameState_ ? this.frameState_.viewHints : undefined);
@@ -22375,7 +22808,14 @@ ol.Map.prototype.renderFrame_ = function(time) {
       this.render();
     }
     Array.prototype.push.apply(this.postRenderFunctions_, frameState.postRenderFunctions);
-    var idle = !frameState.viewHints[ol.ViewHint.ANIMATING] && !frameState.viewHints[ol.ViewHint.INTERACTING] && !ol.extent.equals(frameState.extent, this.previousExtent_);
+    if (previousFrameState) {
+      var moveStart = !this.previousExtent_ || !ol.extent.isEmpty(this.previousExtent_) && !ol.extent.equals(frameState.extent, this.previousExtent_);
+      if (moveStart) {
+        this.dispatchEvent(new ol.MapEvent(ol.MapEventType.MOVESTART, this, previousFrameState));
+        this.previousExtent_ = ol.extent.createOrUpdateEmpty(this.previousExtent_);
+      }
+    }
+    var idle = this.previousExtent_ && !frameState.viewHints[ol.ViewHint.ANIMATING] && !frameState.viewHints[ol.ViewHint.INTERACTING] && !ol.extent.equals(frameState.extent, this.previousExtent_);
     if (idle) {
       this.dispatchEvent(new ol.MapEvent(ol.MapEventType.MOVEEND, this, frameState));
       ol.extent.clone(frameState.extent, this.previousExtent_);
@@ -23809,12 +24249,12 @@ ol.format.Feature.transformWithOptions = function(geometry, write, opt_options) 
     if (geometry instanceof ol.geom.Geometry) {
       transformed = (write ? geometry.clone() : geometry).transform(write ? featureProjection : dataProjection, write ? dataProjection : featureProjection);
     } else {
-      transformed = ol.proj.transformExtent(write ? geometry.slice() : geometry, write ? featureProjection : dataProjection, write ? dataProjection : featureProjection);
+      transformed = ol.proj.transformExtent(geometry, dataProjection, featureProjection);
     }
   } else {
     transformed = geometry;
   }
-  if (write && opt_options && opt_options.decimals) {
+  if (write && opt_options && opt_options.decimals !== undefined) {
     var power = Math.pow(10, opt_options.decimals);
     var transform = function(coordinates) {
       for (var i = 0, ii = coordinates.length; i < ii; ++i) {
@@ -23822,11 +24262,10 @@ ol.format.Feature.transformWithOptions = function(geometry, write, opt_options) 
       }
       return coordinates;
     };
-    if (Array.isArray(transformed)) {
-      transform(transformed);
-    } else {
-      transformed.applyTransform(transform);
+    if (transformed === geometry) {
+      transformed = transformed.clone();
     }
+    transformed.applyTransform(transform);
   }
   return transformed;
 };
@@ -24718,7 +25157,8 @@ ol.format.EsriJSON.convertRings_ = function(rings, layout) {
     var matched = false;
     for (i = outerRings.length - 1; i >= 0; i--) {
       var outerRing = outerRings[i][0];
-      if (ol.extent.containsExtent((new ol.geom.LinearRing(outerRing)).getExtent(), (new ol.geom.LinearRing(hole)).getExtent())) {
+      var containsHole = ol.extent.containsExtent((new ol.geom.LinearRing(outerRing)).getExtent(), (new ol.geom.LinearRing(hole)).getExtent());
+      if (containsHole) {
         outerRings[i].push(hole);
         matched = true;
         break;
@@ -28269,6 +28709,7 @@ ol.format.KML.DataParser_ = function(node, objectStack) {
       featureObject[featureObject.displayName] = featureObject.value;
     }
   }
+  delete featureObject["value"];
 };
 ol.format.KML.ExtendedDataParser_ = function(node, objectStack) {
   ol.xml.parseNode(ol.format.KML.EXTENDED_DATA_PARSERS_, node, objectStack);
@@ -31258,21 +31699,22 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes, o
   }
   var schemaLocation = ol.format.WFS.SCHEMA_LOCATIONS[version];
   ol.xml.setAttributeNS(node, "http://www.w3.org/2001/XMLSchema-instance", "xsi:schemaLocation", schemaLocation);
+  var featurePrefix = options.featurePrefix ? options.featurePrefix : ol.format.WFS.FEATURE_PREFIX;
   if (inserts) {
-    obj = {node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":options.featurePrefix, "gmlVersion":gmlVersion, "hasZ":options.hasZ, "srsName":options.srsName};
+    obj = {node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":featurePrefix, "gmlVersion":gmlVersion, "hasZ":options.hasZ, "srsName":options.srsName};
     ol.obj.assign(obj, baseObj);
     ol.xml.pushSerializeAndPop(obj, ol.format.WFS.TRANSACTION_SERIALIZERS_, ol.xml.makeSimpleNodeFactory("Insert"), inserts, objectStack);
   }
   if (updates) {
-    obj = {node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":options.featurePrefix, "gmlVersion":gmlVersion, "hasZ":options.hasZ, "srsName":options.srsName};
+    obj = {node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":featurePrefix, "gmlVersion":gmlVersion, "hasZ":options.hasZ, "srsName":options.srsName};
     ol.obj.assign(obj, baseObj);
     ol.xml.pushSerializeAndPop(obj, ol.format.WFS.TRANSACTION_SERIALIZERS_, ol.xml.makeSimpleNodeFactory("Update"), updates, objectStack);
   }
   if (deletes) {
-    ol.xml.pushSerializeAndPop({node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":options.featurePrefix, "gmlVersion":gmlVersion, "srsName":options.srsName}, ol.format.WFS.TRANSACTION_SERIALIZERS_, ol.xml.makeSimpleNodeFactory("Delete"), deletes, objectStack);
+    ol.xml.pushSerializeAndPop({node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":featurePrefix, "gmlVersion":gmlVersion, "srsName":options.srsName}, ol.format.WFS.TRANSACTION_SERIALIZERS_, ol.xml.makeSimpleNodeFactory("Delete"), deletes, objectStack);
   }
   if (options.nativeElements) {
-    ol.xml.pushSerializeAndPop({node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":options.featurePrefix, "gmlVersion":gmlVersion, "srsName":options.srsName}, ol.format.WFS.TRANSACTION_SERIALIZERS_, ol.xml.makeSimpleNodeFactory("Native"), options.nativeElements, objectStack);
+    ol.xml.pushSerializeAndPop({node:node, "featureNS":options.featureNS, "featureType":options.featureType, "featurePrefix":featurePrefix, "gmlVersion":gmlVersion, "srsName":options.srsName}, ol.format.WFS.TRANSACTION_SERIALIZERS_, ol.xml.makeSimpleNodeFactory("Native"), options.nativeElements, objectStack);
   }
   return node;
 };
@@ -32176,7 +32618,7 @@ ol.Geolocation = function(opt_options) {
   ol.events.listen(this, ol.Object.getChangeEventType(ol.GeolocationProperty.PROJECTION), this.handleProjectionChanged_, this);
   ol.events.listen(this, ol.Object.getChangeEventType(ol.GeolocationProperty.TRACKING), this.handleTrackingChanged_, this);
   if (options.projection !== undefined) {
-    this.setProjection(ol.proj.get(options.projection));
+    this.setProjection(options.projection);
   }
   if (options.trackingOptions !== undefined) {
     this.setTrackingOptions(options.trackingOptions);
@@ -32266,7 +32708,7 @@ ol.Geolocation.prototype.getTrackingOptions = function() {
   return this.get(ol.GeolocationProperty.TRACKING_OPTIONS);
 };
 ol.Geolocation.prototype.setProjection = function(projection) {
-  this.set(ol.GeolocationProperty.PROJECTION, projection);
+  this.set(ol.GeolocationProperty.PROJECTION, ol.proj.get(projection));
 };
 ol.Geolocation.prototype.setTracking = function(tracking) {
   this.set(ol.GeolocationProperty.TRACKING, tracking);
@@ -33001,6 +33443,7 @@ ol.interaction.DragAndDrop.Event = function(type, file, opt_features, opt_projec
 ol.inherits(ol.interaction.DragAndDrop.Event, ol.events.Event);
 goog.provide("ol.interaction.DragRotateAndZoom");
 goog.require("ol");
+goog.require("ol.RotationConstraint");
 goog.require("ol.ViewHint");
 goog.require("ol.events.condition");
 goog.require("ol.interaction.Interaction");
@@ -33027,7 +33470,7 @@ ol.interaction.DragRotateAndZoom.handleDragEvent_ = function(mapBrowserEvent) {
   var theta = Math.atan2(deltaY, deltaX);
   var magnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
   var view = map.getView();
-  if (this.lastAngle_ !== undefined) {
+  if (view.getConstraints().rotation !== ol.RotationConstraint.disable && this.lastAngle_ !== undefined) {
     var angleDelta = theta - this.lastAngle_;
     ol.interaction.Interaction.rotateWithoutConstraints(view, view.getRotation() - angleDelta);
   }
@@ -35348,7 +35791,6 @@ goog.require("ol.interaction.TranslateEventType");
 ol.interaction.Translate = function(opt_options) {
   ol.interaction.Pointer.call(this, {handleDownEvent:ol.interaction.Translate.handleDownEvent_, handleDragEvent:ol.interaction.Translate.handleDragEvent_, handleMoveEvent:ol.interaction.Translate.handleMoveEvent_, handleUpEvent:ol.interaction.Translate.handleUpEvent_});
   var options = opt_options ? opt_options : {};
-  this.previousCursor_ = undefined;
   this.lastCoordinate_ = null;
   this.features_ = options.features !== undefined ? options.features : null;
   var layerFilter;
@@ -35407,16 +35849,12 @@ ol.interaction.Translate.handleDragEvent_ = function(event) {
   }
 };
 ol.interaction.Translate.handleMoveEvent_ = function(event) {
-  var elem = event.map.getTargetElement();
+  var elem = event.map.getViewport();
   if (this.featuresAtPixel_(event.pixel, event.map)) {
-    this.previousCursor_ = this.previousCursor_ !== undefined ? this.previousCursor_ : elem.style.cursor;
-    elem.style.cursor = this.lastCoordinate_ ? "-webkit-grabbing" : "-webkit-grab";
-    elem.style.cursor = this.lastCoordinate_ ? "grabbing" : "grab";
+    elem.classList.remove(this.lastCoordinate_ ? "ol-grab" : "ol-grabbing");
+    elem.classList.add(this.lastCoordinate_ ? "ol-grabbing" : "ol-grab");
   } else {
-    if (this.previousCursor_ !== undefined) {
-      elem.style.cursor = this.previousCursor_;
-      this.previousCursor_ = undefined;
-    }
+    elem.classList.remove("ol-grab", "ol-grabbing");
   }
 };
 ol.interaction.Translate.prototype.featuresAtPixel_ = function(pixel, map) {
@@ -35443,13 +35881,12 @@ ol.interaction.Translate.prototype.handleActiveChanged_ = function() {
 ol.interaction.Translate.prototype.updateState_ = function(oldMap) {
   var map = this.getMap();
   var active = this.getActive();
-  if ((!map || !active) && this.previousCursor_ !== undefined) {
-    if (!map) {
-      map = oldMap;
+  if (!map || !active) {
+    map = map || oldMap;
+    if (map) {
+      var elem = map.getViewport();
+      elem.classList.remove("ol-grab", "ol-grabbing");
     }
-    var elem = map.getTargetElement();
-    elem.style.cursor = this.previousCursor_;
-    this.previousCursor_ = undefined;
   }
 };
 ol.interaction.Translate.Event = function(type, features, coordinate) {
@@ -35761,7 +36198,7 @@ ol.source.Image.prototype.getImage = function(extent, resolution, pixelRatio, pr
     return this.getImageInternal(extent, resolution, pixelRatio, projection);
   } else {
     if (this.reprojectedImage_) {
-      if (this.reprojectedRevision_ == this.getRevision() && ol.proj.equivalent(this.reprojectedImage_.getProjection(), projection) && this.reprojectedImage_.getResolution() == resolution && this.reprojectedImage_.getPixelRatio() == pixelRatio && ol.extent.equals(this.reprojectedImage_.getExtent(), extent)) {
+      if (this.reprojectedRevision_ == this.getRevision() && ol.proj.equivalent(this.reprojectedImage_.getProjection(), projection) && this.reprojectedImage_.getResolution() == resolution && ol.extent.equals(this.reprojectedImage_.getExtent(), extent)) {
         return this.reprojectedImage_;
       }
       this.reprojectedImage_.dispose();
@@ -36712,61 +37149,61 @@ goog.require("ol.geom.Point");
 goog.require("ol.source.Vector");
 ol.source.Cluster = function(options) {
   ol.source.Vector.call(this, {attributions:options.attributions, extent:options.extent, logo:options.logo, projection:options.projection, wrapX:options.wrapX});
-  this.resolution_ = undefined;
-  this.distance_ = options.distance !== undefined ? options.distance : 20;
-  this.features_ = [];
-  this.geometryFunction_ = options.geometryFunction || function(feature) {
+  this.resolution = undefined;
+  this.distance = options.distance !== undefined ? options.distance : 20;
+  this.features = [];
+  this.geometryFunction = options.geometryFunction || function(feature) {
     var geometry = feature.getGeometry();
     ol.asserts.assert(geometry instanceof ol.geom.Point, 10);
     return geometry;
   };
-  this.source_ = options.source;
-  this.source_.on(ol.events.EventType.CHANGE, ol.source.Cluster.prototype.refresh_, this);
+  this.source = options.source;
+  this.source.on(ol.events.EventType.CHANGE, ol.source.Cluster.prototype.refresh, this);
 };
 ol.inherits(ol.source.Cluster, ol.source.Vector);
 ol.source.Cluster.prototype.getDistance = function() {
-  return this.distance_;
+  return this.distance;
 };
 ol.source.Cluster.prototype.getSource = function() {
-  return this.source_;
+  return this.source;
 };
 ol.source.Cluster.prototype.loadFeatures = function(extent, resolution, projection) {
-  this.source_.loadFeatures(extent, resolution, projection);
-  if (resolution !== this.resolution_) {
+  this.source.loadFeatures(extent, resolution, projection);
+  if (resolution !== this.resolution) {
     this.clear();
-    this.resolution_ = resolution;
-    this.cluster_();
-    this.addFeatures(this.features_);
+    this.resolution = resolution;
+    this.cluster();
+    this.addFeatures(this.features);
   }
 };
 ol.source.Cluster.prototype.setDistance = function(distance) {
-  this.distance_ = distance;
-  this.refresh_();
+  this.distance = distance;
+  this.refresh();
 };
-ol.source.Cluster.prototype.refresh_ = function() {
+ol.source.Cluster.prototype.refresh = function() {
   this.clear();
-  this.cluster_();
-  this.addFeatures(this.features_);
-  this.changed();
+  this.cluster();
+  this.addFeatures(this.features);
+  ol.source.Vector.prototype.refresh.call(this);
 };
-ol.source.Cluster.prototype.cluster_ = function() {
-  if (this.resolution_ === undefined) {
+ol.source.Cluster.prototype.cluster = function() {
+  if (this.resolution === undefined) {
     return;
   }
-  this.features_.length = 0;
+  this.features.length = 0;
   var extent = ol.extent.createEmpty();
-  var mapDistance = this.distance_ * this.resolution_;
-  var features = this.source_.getFeatures();
+  var mapDistance = this.distance * this.resolution;
+  var features = this.source.getFeatures();
   var clustered = {};
   for (var i = 0, ii = features.length; i < ii; i++) {
     var feature = features[i];
     if (!(ol.getUid(feature).toString() in clustered)) {
-      var geometry = this.geometryFunction_(feature);
+      var geometry = this.geometryFunction(feature);
       if (geometry) {
         var coordinates = geometry.getCoordinates();
         ol.extent.createOrUpdateFromCoordinate(coordinates, extent);
         ol.extent.buffer(extent, mapDistance, extent);
-        var neighbors = this.source_.getFeaturesInExtent(extent);
+        var neighbors = this.source.getFeaturesInExtent(extent);
         neighbors = neighbors.filter(function(neighbor) {
           var uid = ol.getUid(neighbor).toString();
           if (!(uid in clustered)) {
@@ -36776,15 +37213,15 @@ ol.source.Cluster.prototype.cluster_ = function() {
             return false;
           }
         });
-        this.features_.push(this.createCluster_(neighbors));
+        this.features.push(this.createCluster(neighbors));
       }
     }
   }
 };
-ol.source.Cluster.prototype.createCluster_ = function(features) {
+ol.source.Cluster.prototype.createCluster = function(features) {
   var centroid = [0, 0];
   for (var i = features.length - 1; i >= 0; --i) {
-    var geometry = this.geometryFunction_(features[i]);
+    var geometry = this.geometryFunction(features[i]);
     if (geometry) {
       ol.coordinate.add(centroid, geometry.getCoordinates());
     } else {
@@ -37500,7 +37937,6 @@ ol.source.Raster.prototype.getImage = function(extent, resolution, pixelRatio, p
   }
   var frameState = this.updateFrameState_(extent, resolution, projection);
   this.requestedFrameState_ = frameState;
-  frameState.tileQueue.loadMoreTiles(16, 16);
   if (this.renderedImageCanvas_) {
     var renderedResolution = this.renderedImageCanvas_.getResolution();
     var renderedExtent = this.renderedImageCanvas_.getExtent();
@@ -37511,6 +37947,7 @@ ol.source.Raster.prototype.getImage = function(extent, resolution, pixelRatio, p
   if (!this.renderedImageCanvas_ || this.getRevision() !== this.renderedRevision_) {
     this.processSources_();
   }
+  frameState.tileQueue.loadMoreTiles(16, 16);
   return this.renderedImageCanvas_;
 };
 ol.source.Raster.prototype.processSources_ = function() {
@@ -38347,7 +38784,6 @@ ol.VectorImageTile.prototype.getTile = function(tileKey) {
 };
 ol.VectorImageTile.prototype.load = function() {
   var leftToLoad = 0;
-  var errors = false;
   if (this.state == ol.TileState.IDLE) {
     this.setState(ol.TileState.LOADING);
   }
@@ -38357,14 +38793,6 @@ ol.VectorImageTile.prototype.load = function() {
       if (sourceTile.state == ol.TileState.IDLE) {
         sourceTile.setLoader(this.loader_);
         sourceTile.load();
-      } else {
-        if (sourceTile.state == ol.TileState.ERROR) {
-          errors = true;
-        } else {
-          if (sourceTile.state == ol.TileState.EMPTY) {
-            ol.array.remove(this.tileKeys, sourceTileKey);
-          }
-        }
       }
       if (sourceTile.state == ol.TileState.LOADING) {
         var key = ol.events.listen(sourceTile, ol.events.EventType.CHANGE, function(e) {
@@ -38373,12 +38801,8 @@ ol.VectorImageTile.prototype.load = function() {
             --leftToLoad;
             ol.events.unlistenByKey(key);
             ol.array.remove(this.loadListenerKeys_, key);
-            if (state == ol.TileState.ERROR) {
-              ol.array.remove(this.tileKeys, sourceTileKey);
-              errors = true;
-            }
             if (leftToLoad == 0) {
-              this.setState(this.tileKeys.length > 0 ? ol.TileState.LOADED : ol.TileState.ERROR);
+              this.finishLoading_();
             }
           }
         }.bind(this));
@@ -38388,10 +38812,22 @@ ol.VectorImageTile.prototype.load = function() {
     }.bind(this));
   }
   if (leftToLoad == 0) {
-    setTimeout(function() {
-      this.setState(this.tileKeys.length > 0 ? ol.TileState.LOADED : errors ? ol.TileState.ERROR : ol.TileState.EMPTY);
-    }.bind(this), 0);
+    setTimeout(this.finishLoading_.bind(this), 0);
   }
+};
+ol.VectorImageTile.prototype.finishLoading_ = function() {
+  var errors = false;
+  var tile;
+  for (var i = this.tileKeys.length - 1; i >= 0; --i) {
+    tile = this.getTile(this.tileKeys[i]);
+    if (tile.getState() == ol.TileState.ERROR) {
+      errors = true;
+    }
+    if (tile.getState() != ol.TileState.LOADED) {
+      this.tileKeys.splice(i, 1);
+    }
+  }
+  this.setState(this.tileKeys.length > 0 ? ol.TileState.LOADED : errors ? ol.TileState.ERROR : ol.TileState.EMPTY);
 };
 ol.VectorImageTile.defaultLoadFunction = function(tile, url) {
   var loader = ol.featureloader.loadFeaturesXhr(url, tile.getFormat(), tile.onLoad_.bind(tile), tile.onError_.bind(tile));
@@ -38446,13 +38882,7 @@ ol.VectorTile.prototype.onLoad_ = function(features, dataProjection) {
   this.setProjection(dataProjection);
   this.setFeatures(features);
 };
-var tilePixels = new ol.proj.Projection({
-  code: 'TILE_PIXELS',
-  units: 'tile-pixels'
-});
 ol.VectorTile.prototype.onError_ = function() {
-  this.setProjection(tilePixels);
-  this.setFeatures([]);
   this.setState(ol.TileState.ERROR);
 };
 ol.VectorTile.prototype.setFeatures = function(features) {
@@ -38900,129 +39330,6 @@ ol.source.Zoomify.Tile_.prototype.getImage = function() {
   }
 };
 ol.source.Zoomify.TierSizeCalculation_ = {DEFAULT:"default", TRUNCATED:"truncated"};
-goog.provide("ol.style.Atlas");
-goog.require("ol.dom");
-ol.style.Atlas = function(size, space) {
-  this.space_ = space;
-  this.emptyBlocks_ = [{x:0, y:0, width:size, height:size}];
-  this.entries_ = {};
-  this.context_ = ol.dom.createCanvasContext2D(size, size);
-  this.canvas_ = this.context_.canvas;
-};
-ol.style.Atlas.prototype.get = function(id) {
-  return this.entries_[id] || null;
-};
-ol.style.Atlas.prototype.add = function(id, width, height, renderCallback, opt_this) {
-  var block, i, ii;
-  for (i = 0, ii = this.emptyBlocks_.length; i < ii; ++i) {
-    block = this.emptyBlocks_[i];
-    if (block.width >= width + this.space_ && block.height >= height + this.space_) {
-      var entry = {offsetX:block.x + this.space_, offsetY:block.y + this.space_, image:this.canvas_};
-      this.entries_[id] = entry;
-      renderCallback.call(opt_this, this.context_, block.x + this.space_, block.y + this.space_);
-      this.split_(i, block, width + this.space_, height + this.space_);
-      return entry;
-    }
-  }
-  return null;
-};
-ol.style.Atlas.prototype.split_ = function(index, block, width, height) {
-  var deltaWidth = block.width - width;
-  var deltaHeight = block.height - height;
-  var newBlock1;
-  var newBlock2;
-  if (deltaWidth > deltaHeight) {
-    newBlock1 = {x:block.x + width, y:block.y, width:block.width - width, height:block.height};
-    newBlock2 = {x:block.x, y:block.y + height, width:width, height:block.height - height};
-    this.updateBlocks_(index, newBlock1, newBlock2);
-  } else {
-    newBlock1 = {x:block.x + width, y:block.y, width:block.width - width, height:height};
-    newBlock2 = {x:block.x, y:block.y + height, width:block.width, height:block.height - height};
-    this.updateBlocks_(index, newBlock1, newBlock2);
-  }
-};
-ol.style.Atlas.prototype.updateBlocks_ = function(index, newBlock1, newBlock2) {
-  var args = [index, 1];
-  if (newBlock1.width > 0 && newBlock1.height > 0) {
-    args.push(newBlock1);
-  }
-  if (newBlock2.width > 0 && newBlock2.height > 0) {
-    args.push(newBlock2);
-  }
-  this.emptyBlocks_.splice.apply(this.emptyBlocks_, args);
-};
-goog.provide("ol.style.AtlasManager");
-goog.require("ol");
-goog.require("ol.style.Atlas");
-ol.style.AtlasManager = function(opt_options) {
-  var options = opt_options || {};
-  this.currentSize_ = options.initialSize !== undefined ? options.initialSize : ol.INITIAL_ATLAS_SIZE;
-  this.maxSize_ = options.maxSize !== undefined ? options.maxSize : ol.MAX_ATLAS_SIZE != -1 ? ol.MAX_ATLAS_SIZE : ol.WEBGL_MAX_TEXTURE_SIZE !== undefined ? ol.WEBGL_MAX_TEXTURE_SIZE : 2048;
-  this.space_ = options.space !== undefined ? options.space : 1;
-  this.atlases_ = [new ol.style.Atlas(this.currentSize_, this.space_)];
-  this.currentHitSize_ = this.currentSize_;
-  this.hitAtlases_ = [new ol.style.Atlas(this.currentHitSize_, this.space_)];
-};
-ol.style.AtlasManager.prototype.getInfo = function(id) {
-  var info = this.getInfo_(this.atlases_, id);
-  if (!info) {
-    return null;
-  }
-  var hitInfo = this.getInfo_(this.hitAtlases_, id);
-  return this.mergeInfos_(info, hitInfo);
-};
-ol.style.AtlasManager.prototype.getInfo_ = function(atlases, id) {
-  var atlas, info, i, ii;
-  for (i = 0, ii = atlases.length; i < ii; ++i) {
-    atlas = atlases[i];
-    info = atlas.get(id);
-    if (info) {
-      return info;
-    }
-  }
-  return null;
-};
-ol.style.AtlasManager.prototype.mergeInfos_ = function(info, hitInfo) {
-  return {offsetX:info.offsetX, offsetY:info.offsetY, image:info.image, hitImage:hitInfo.image};
-};
-ol.style.AtlasManager.prototype.add = function(id, width, height, renderCallback, opt_renderHitCallback, opt_this) {
-  if (width + this.space_ > this.maxSize_ || height + this.space_ > this.maxSize_) {
-    return null;
-  }
-  var info = this.add_(false, id, width, height, renderCallback, opt_this);
-  if (!info) {
-    return null;
-  }
-  var renderHitCallback = opt_renderHitCallback !== undefined ? opt_renderHitCallback : ol.nullFunction;
-  var hitInfo = this.add_(true, id, width, height, renderHitCallback, opt_this);
-  return this.mergeInfos_(info, hitInfo);
-};
-ol.style.AtlasManager.prototype.add_ = function(isHitAtlas, id, width, height, renderCallback, opt_this) {
-  var atlases = isHitAtlas ? this.hitAtlases_ : this.atlases_;
-  var atlas, info, i, ii;
-  for (i = 0, ii = atlases.length; i < ii; ++i) {
-    atlas = atlases[i];
-    info = atlas.add(id, width, height, renderCallback, opt_this);
-    if (info) {
-      return info;
-    } else {
-      if (!info && i === ii - 1) {
-        var size;
-        if (isHitAtlas) {
-          size = Math.min(this.currentHitSize_ * 2, this.maxSize_);
-          this.currentHitSize_ = size;
-        } else {
-          size = Math.min(this.currentSize_ * 2, this.maxSize_);
-          this.currentSize_ = size;
-        }
-        atlas = new ol.style.Atlas(size, this.space_);
-        atlases.push(atlas);
-        ++ii;
-      }
-    }
-  }
-  return null;
-};
 goog.addDependency("demos/editor/equationeditor.js", ["goog.demos.editor.EquationEditor"], ["goog.ui.equation.EquationEditorDialog"]);
 goog.addDependency("demos/editor/helloworld.js", ["goog.demos.editor.HelloWorld"], ["goog.dom", "goog.dom.TagName", "goog.editor.Plugin"]);
 goog.addDependency("demos/editor/helloworlddialog.js", ["goog.demos.editor.HelloWorldDialog", "goog.demos.editor.HelloWorldDialog.OkEvent"], ["goog.dom.TagName", "goog.events.Event", "goog.string", "goog.ui.editor.AbstractDialog", "goog.ui.editor.AbstractDialog.Builder", "goog.ui.editor.AbstractDialog.EventType"]);
@@ -39440,6 +39747,7 @@ goog.exportProperty(ol.View.prototype, "getResolutionForExtent", ol.View.prototy
 goog.exportProperty(ol.View.prototype, "getRotation", ol.View.prototype.getRotation);
 goog.exportProperty(ol.View.prototype, "getZoom", ol.View.prototype.getZoom);
 goog.exportProperty(ol.View.prototype, "getZoomForResolution", ol.View.prototype.getZoomForResolution);
+goog.exportProperty(ol.View.prototype, "getResolutionForZoom", ol.View.prototype.getResolutionForZoom);
 goog.exportProperty(ol.View.prototype, "fit", ol.View.prototype.fit);
 goog.exportProperty(ol.View.prototype, "centerOn", ol.View.prototype.centerOn);
 goog.exportProperty(ol.View.prototype, "rotate", ol.View.prototype.rotate);
@@ -41956,6 +42264,7 @@ ol.CenterConstraintType;
 ol.CircleRenderOptions;
 ol.Color;
 ol.ColorLike;
+ol.Constraints;
 ol.Coordinate;
 ol.CoordinateFormatType;
 ol.DragBoxEndConditionType;
@@ -42013,6 +42322,7 @@ ol.TileUrlFunctionType;
 ol.TransformFunction;
 ol.ViewAnimation;
 ol.WebglBufferCacheEntry;
+ol.WebglGlyphAtlas;
 ol.WebglPolygonSegment;
 ol.WebglPolygonVertex;
 ol.WebglTextureCacheEntry;

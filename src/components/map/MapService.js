@@ -1011,9 +1011,6 @@ goog.require('ga_urlutils_service');
                     l['source-layer'] = 'swissnames-lv03';
                   }
                 });
-                console.log(olLayer.bodId);
-                console.log(data.name);
-                console.log(layer.styleSource);
                 olms.applyStyle(olLayer, data, layer.styleSource);
               });
             }

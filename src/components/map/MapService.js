@@ -618,31 +618,29 @@ goog.require('ga_urlutils_service');
               });
 
               // VectorTile
-              var vts = [
-                'swissnames'
-              ];
-              vts.forEach(function(vt) {
-               if (vt) {
-                 response.data[vt] = {
-                   type: 'vectortile',
-                   serverLayerName: vt,
-                   url: 'https://tileserver.dev.bgdi.ch/data/' +
-                       'SWISSNAMES-LV03-mbtiles/{z}/{x}/{y}.pbf',
-                   attribution: 'swisstopo',
-                   attributionUrl: 'https://www.swisstopo.admin.ch/' + lang +
-                       '/home.html'
-                 };
-               }
+              var tk = '?access_token=pk.eyJ1IjoidmliMmQiLCJhIjoiY2l5eTlqcG' +
+                  'toMDAwZzJ3cG56emF6YmRoOCJ9.lP3KfJVHrUHp7DXIQrZYMw';
+              var vts = [{
+                serverLayerName: 'SWISSNAMES-LV03-mbtiles',
+                styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
+                    'cj168d2g500482rqm988ycycc' + tk,
+                styleSource: 'composite'
+              }, {
+                serverLayerName: 'LBM-LV03-mbtiles',
+                styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
+                    'cj2btdr0d00532ro5ix21uls4' + tk,
+                styleSource: 'lightbasemap'
+              }];
+              vts.forEach(function(vt, idx) {
+                response.data[vt.serverLayerName] = {
+                  type: 'vectortile',
+                  serverLayerName: vt.serverLayerName,
+                  url: 'https://tileserver.dev.bgdi.ch/data/' +
+                      vt.serverLayerName + '/{z}/{x}/{y}.pbf',
+                  styleUrl: vt.styleUrl,
+                  styleSource: vt.styleSource
+                };
               });
-
-              // Create a LayerGroup with swissnames and swiimage
-              response.data['ch.swisstopo.swissimagelabels'] = {
-                type: 'aggregate',
-                subLayersIds: [
-                  'ch.swisstopo.swissimage',
-                  'swissnames'
-                ]
-              };
             }
             if (!layers) { // First load
               layers = response.data;
@@ -999,9 +997,26 @@ goog.require('ga_urlutils_service');
                 tilePixelRatio: 16,
                 url: layer.url || getVectorTilesUrl(layer.serverLayerName,
                     timestamp, dfltVectorTilesSubdomains)
-              }),
-              style: gaStyleFactory.getStyleFunction('labels')
+              })
             });
+            if (layer.styleUrl) {
+              $http.get(layer.styleUrl, {
+                cache: true
+              }).then(function(response) {
+                var data = response.data;
+                // Sprit url are not managed correctly by olms
+                data.sprite = null;
+                data.layers.forEach(function(l) {
+                  if (l['source-layer'] == 'swissnames') {
+                    l['source-layer'] = 'swissnames-lv03';
+                  }
+                });
+                console.log(olLayer.bodId);
+                console.log(data.name);
+                console.log(layer.styleSource);
+                olms.applyStyle(olLayer, data, layer.styleSource);
+              });
+            }
           }
 
           if (angular.isDefined(olLayer)) {

@@ -671,6 +671,7 @@ itemscope itemtype="http://schema.org/WebApplication"
       window.CESIUM_BASE_URL="${s3basepath}${versionslashed}lib/Cesium/";
     </script>
     <script src="${s3basepath}${versionslashed}lib/build.js"></script>
+    <script src="${s3basepath}lib/olms.js"></script>
     <!-- For <= IE9, we load it explicitely as XDomain does not support
          dynamic/lazy loading of javascript -->
     <!--![if IE]>
@@ -715,6 +716,7 @@ itemscope itemtype="http://schema.org/WebApplication"
     </script>
 
     <script src="${s3basepath}lib/olcesium-debug.js"></script>
+    <script src="${s3basepath}lib/olms.js"></script>
     <script src="${s3basepath}deps.js"></script>
     <script>
       goog.require('geoadmin');

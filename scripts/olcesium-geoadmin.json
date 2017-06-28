@@ -106,6 +106,7 @@
     "ol.proj.get",
     "ol.proj.transform",
     "ol.proj.transformExtent",
+    "ol.render.Feature#*",
     "ol.style.Circle",
     "ol.style.Circle#*",
     "ol.style.Fill",

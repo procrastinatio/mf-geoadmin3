@@ -20,13 +20,19 @@ goog.require('ga_permalink');
       var bgs = []; // The list of backgrounds available
       var bgsP; // Promise resolved when the background service is initialized.
       var labels, voidLayer = {id: 'voidLayer', label: 'void_layer'};
+      var lbm = {
+        id: 'LBM-LV03-mbtiles',
+        label: 'Light map',
+        disable3d: true,
+        labels: 'SWISSNAMES-LV03-mbtiles'
+      };
       var predefinedBgs = {
         'voidLayer': voidLayer,
         'ch.swisstopo.swissimage': {
           id: 'ch.swisstopo.swissimage',
           label: 'bg_luftbild',
           disable3d: true,
-          labels: 'swissnames'
+          labels: 'SWISSNAMES-LV03-mbtiles'
         },
         'ch.swisstopo.pixelkarte-farbe': {
           id: 'ch.swisstopo.pixelkarte-farbe',
@@ -76,6 +82,9 @@ goog.require('ga_permalink');
         });
         if (bgs.indexOf(voidLayer) === -1) {
           bgs.push(voidLayer);
+        }
+        if (bgs.indexOf(lbm) === -1) {
+          bgs.push(lbm);
         }
       };
 
@@ -134,17 +143,18 @@ goog.require('ga_permalink');
 
                 }
               }
+              if (labels) {
+                layers.remove(labels);
+              }
               if (bg.labels) {
                 labels = labels || gaLayers.getOlLayerById(bg.labels);
                 labels.displayInLayerManager = false;
                 labels.tooltip = false;
                 labels.setZIndex(1000);
                 layers.push(labels);
-              } else if (labels) {
-                layers.remove(labels);
               }
               broadcast();
-             }
+            }
           }
         };
 

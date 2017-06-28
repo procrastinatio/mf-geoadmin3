@@ -38446,7 +38446,13 @@ ol.VectorTile.prototype.onLoad_ = function(features, dataProjection) {
   this.setProjection(dataProjection);
   this.setFeatures(features);
 };
+var tilePixels = new ol.proj.Projection({
+  code: 'TILE_PIXELS',
+  units: 'tile-pixels'
+});
 ol.VectorTile.prototype.onError_ = function() {
+  this.setProjection(tilePixels);
+  this.setFeatures([]);
   this.setState(ol.TileState.ERROR);
 };
 ol.VectorTile.prototype.setFeatures = function(features) {

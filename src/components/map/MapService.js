@@ -624,7 +624,9 @@ goog.require('ga_urlutils_service');
                 serverLayerName: 'SWISSNAMES-LV03-mbtiles',
                 styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
                     'cj168d2g500482rqm988ycycc' + tk,
-                styleSource: 'composite'
+                styleSource: 'composite',
+                tilePixelRatio: 4,
+                tileSize: 1024
               }, {
                 serverLayerName: 'LBM-LV03-mbtiles',
                 styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
@@ -993,8 +995,10 @@ goog.require('ga_urlutils_service');
             olLayer = new ol.layer.VectorTile({
               source: new ol.source.VectorTile({
                 format: new ol.format.MVT(),
-                tileGrid: ol.tilegrid.createXYZ(),
-                tilePixelRatio: 16,
+                tileGrid: ol.tilegrid.createXYZ({
+                  tileSize: layer.tileSize || 4096
+                }),
+                tilePixelRatio: layer.tilePixelRatio || 16,
                 url: layer.url || getVectorTilesUrl(layer.serverLayerName,
                     timestamp, dfltVectorTilesSubdomains)
               })

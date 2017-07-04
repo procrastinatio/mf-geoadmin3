@@ -261,7 +261,7 @@ goog.require('ga_window_service');
                   angular.extend({crosshair: 'marker'}, p));
 
               scope.qrcodeUrl = null;
-              if (!gaNetworkStatus.offline && gaWindow.isWidth('>=s') &&
+              if (!gaNetworkStatus.offline && gaWindow.isWidth('>s') &&
                   gaWindow.isHeight('>s')) {
                 scope.qrcodeUrl = qrcodeUrl + '?url=' +
                     escape(scope.contextPermalink);

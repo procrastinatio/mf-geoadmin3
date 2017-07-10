@@ -628,9 +628,11 @@ goog.require('ga_urlutils_service');
                 tilePixelRatio: 4,
                 tileSize: 1024
               }, {
-                serverLayerName: 'LBM-LV03-mbtiles',
-                styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
-                    'cj2btdr0d00532ro5ix21uls4' + tk,
+                serverLayerName: 'SLBM-LV03-mbtiles',
+                //styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
+                //    'cj2btdr0d00532ro5ix21uls4' + tk,
+                styleUrl: 'https://tileserver.dev.bgdi.ch/styles/' +
+                    'superlightbasemap.json',
                 styleSource: 'lightbasemap',
                 tilePixelRatio: 4,
                 tileSize: 1024
@@ -1017,6 +1019,9 @@ goog.require('ga_urlutils_service');
                 data.layers.forEach(function(l) {
                   if (l['source-layer'] == 'swissnames') {
                     l['source-layer'] = 'swissnames-lv03';
+                  }
+                  if (l['source-layer'] == 'superlightbasemap-layer') {
+                    l['source-layer'] = 'superlightbasemap-lv03-layer';
                   }
                 });
                 olms.applyStyle(olLayer, data, layer.styleSource);

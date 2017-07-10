@@ -631,7 +631,9 @@ goog.require('ga_urlutils_service');
                 serverLayerName: 'LBM-LV03-mbtiles',
                 styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
                     'cj2btdr0d00532ro5ix21uls4' + tk,
-                styleSource: 'lightbasemap'
+                styleSource: 'lightbasemap',
+                tilePixelRatio: 4,
+                tileSize: 1024
               }];
               vts.forEach(function(vt, idx) {
                 response.data[vt.serverLayerName] = {
@@ -640,7 +642,9 @@ goog.require('ga_urlutils_service');
                   url: 'https://tileserver.dev.bgdi.ch/data/' +
                       vt.serverLayerName + '/{z}/{x}/{y}.pbf',
                   styleUrl: vt.styleUrl,
-                  styleSource: vt.styleSource
+                  styleSource: vt.styleSource,
+                  tilePixelRatio: vt.tilePixelRatio,
+                  tileSize: vt.tileSize
                 };
               });
             }

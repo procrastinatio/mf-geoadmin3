@@ -21,7 +21,7 @@ goog.require('ga_permalink');
       var bgsP; // Promise resolved when the background service is initialized.
       var labels, voidLayer = {id: 'voidLayer', label: 'void_layer'};
       var lbm = {
-        id: 'SLBM-LV03-mbtiles',
+        id: 'lbm',
         label: 'Light map',
         disable3d: true,
         labels: 'SWISSNAMES-LV03-mbtiles'

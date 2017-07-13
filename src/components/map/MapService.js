@@ -649,6 +649,22 @@ goog.require('ga_urlutils_service');
                   tileSize: vt.tileSize
                 };
               });
+              // LBM with relief
+              var relief = 'ch.swisstopo.swissalti3d-reliefschattierung';
+              if (response.data[relief]) {
+                response.data[relief + '-custom'] = response.data[relief];
+                response.data[relief + '-custom'].opacity = 0.1;
+                response.data['lbm'] = {
+                  background: true,
+                  serverLayerName: 'lbm',
+                  label: 'light map',
+                  subLayersIds: [
+                    relief + '-custom',
+                    'SLBM-LV03-mbtiles'
+                  ],
+                  type: 'aggregate'
+                };
+              }
             }
             if (!layers) { // First load
               layers = response.data;

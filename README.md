@@ -1,7 +1,7 @@
 mf-geoadmin3
 ============
 
-next generation map.geo.admin.ch
+next generation map.geo.admin.ch 
 
 Jenkins build status: [![Jenkins Build Status](https://jenkins.ci.bgdi.ch/buildStatus/icon?job=MAIN_geoadmin3)](https://jenkins.ci.bgdi.ch/job/MAIN_geoadmin3/)
 

@@ -399,7 +399,8 @@ goog.require('ga_urlutils_service');
                 }
                 canceller = $q.defer();
                 $http.get(url, {
-                  timeout: canceller.promise
+                  timeout: canceller.promise,
+                  cache: false
                 }).then(function(response) {
                   var data = response.data;
                   if (!$scope.options.printing) {

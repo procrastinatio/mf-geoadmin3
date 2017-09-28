@@ -153,8 +153,8 @@ goog.require('ga_waitcursor_service');
         ['100', '101', '102', '103', '104'] :
         ['', '0', '1', '2', '3', '4'];
     gaLayersProvider.wmsUrlTemplate = '//wms{s}.geo.admin.ch/';
-    gaLayersProvider.wmtsGetTileUrlTemplate = '//wmts{s}.geo.admin.ch/1.0.0/' +
-        '{Layer}/default/{Time}/{TileMatrixSet}/{z}/{y}/{x}.{Format}';
+    gaLayersProvider.wmtsGetTileUrlTemplate = gaGlobalOptions.wmtsBaseUrl +
+        '/1.0.0/{Layer}/default/{Time}/{TileMatrixSet}/{z}/{y}/{x}.{Format}';
     gaLayersProvider.wmtsMapProxyGetTileUrlTemplate =
         gaGlobalOptions.mapproxyUrl +
         '/1.0.0/{Layer}/default/{Time}/{TileMatrixSet}/{z}/{x}/{y}.{Format}';

@@ -781,6 +781,10 @@ itemscope itemtype="http://schema.org/WebApplication"
         var publicUrl = setBackend(prtl + '${public_url}', prtl + '${public_tech_url}', 'public_url');
         var printUrl = setBackend(prtl + '${print_url}', prtl + '${print_tech_url}', 'print_url');
         var proxyUrl = prtl + '${proxy_url}' + '/';
+        var wmtsUrl = '//wmts{s}.geo.admin.ch';
+        if (getParam('wmts_url')) {
+          wmtsUrl = getParam('wmts_url');
+        }
         var apiOverwrite = !!(getParam('api_url') || env);
         ngeo.baseModuleTemplateUrl = 'ngeo/src/modules';
         module.constant('gaGlobalOptions', {
@@ -793,6 +797,7 @@ itemscope itemtype="http://schema.org/WebApplication"
           apiUrl: apiUrl,
           printUrl: printUrl,
           proxyUrl: proxyUrl,
+          wmtsBaseUrl: wmtsUrl,
           mapproxyUrl: mapproxyUrl,
           vectorTilesUrl: vectorTilesUrl,
           shopUrl: shopUrl,

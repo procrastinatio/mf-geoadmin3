@@ -26,6 +26,7 @@ beforeEach(function() {
       apiUrl: location.protocol + apiUrl,
       printUrl: location.protocol + printUrl,
       mapproxyUrl: location.protocol + mapproxyUrl,
+      wmtsBaseUrl: location.protocol + mapproxyUrl,
       shopUrl: location.protocol + shopUrl,
       publicUrl: location.protocol + publicUrl,
       publicUrlRegexp: /^https?:\/\/public\..*\.(bgdi|admin)\.ch\/.*/,

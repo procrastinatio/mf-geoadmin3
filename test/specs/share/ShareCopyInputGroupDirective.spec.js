@@ -26,7 +26,7 @@ describe('ga_sharecopyinputgroup_directive', function() {
       loadDirective();
     });
 
-    it.only('set scope values', function() {
+    it('set scope values', function() {
       expect(scope.inputToCopy.length).to.be(1);
       expect(scope.onBeforeCopy()).to.be('a');
     });

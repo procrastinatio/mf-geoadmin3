@@ -52,6 +52,11 @@ goog.require('ga_window_service');
                     'ga-coordinate-precision="3"></div>' +
               '<div ng-if="html.showProfile" ' +
                    'ga-profile-bt="html.feature"></div>' +
+              '<div ng-if="html.showProfile && html.ol3d && ' +
+                   'html.ol3d.getEnabled()" ' +
+                    'ga-track-bt-map="::html.map" ' +
+                    'ga-track-bt-ol3d="::html.ol3d" ' +
+                    'ga-track-bt="html.feature"></div>' +
             '</div>' +
             '<div ga-shop ' +
                  'ga-shop-map="::html.map" ' +
@@ -719,6 +724,7 @@ goog.require('ga_window_service');
               // care of the rest
               htmls.push({
                 map: scope.map,
+                ol3d: scope.ol3d,
                 feature: value,
                 showVectorInfos: (value instanceof ol.Feature),
                 clickGeometry: new ol.geom.Point(scope.clickCoordinate),

@@ -51,6 +51,7 @@ goog.provide('ga_stylesfromliterals_service');
           } else if (type === 'text') {
             style.stroke = new ol.style.Stroke(style.stroke);
             style.fill = new ol.style.Fill(style.fill);
+            style.overflow = true;
             olStyles[type] = new ol.style.Text(style);
           }
         });

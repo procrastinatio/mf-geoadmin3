@@ -607,7 +607,8 @@ goog.require('ga_urlutils_service');
               minResolution: config.minResolution,
               maxResolution: config.maxResolution,
               source: olSource,
-              extent: extent
+              extent: extent,
+              declutter: true
             });
             geojsonPromises[bodId] = gaUrlUtils.proxifyUrl(config.geojsonUrl).
                 then(function(proxyUrl) {

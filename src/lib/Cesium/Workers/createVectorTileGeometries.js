@@ -1881,6 +1881,19 @@ define('Core/Cartesian3',[
     };
 
     /**
+     * Projects vector a onto vector b
+     * @param {Cartesian3} a The vector that needs projecting
+     * @param {Cartesian3} b The vector to project onto
+     * @param {Cartesian3} result The result cartesian
+     * @returns {Cartesian3} The modified result parameter
+     */
+    Cartesian3.projectVector = function(a, b, result) {
+        
+        var scalar = Cartesian3.dot(a, b) / Cartesian3.dot(b, b);
+        return Cartesian3.multiplyByScalar(b, scalar, result);
+    };
+
+    /**
      * Compares the provided Cartesians componentwise and returns
      * <code>true</code> if they are equal, <code>false</code> otherwise.
      *
@@ -11588,7 +11601,7 @@ define('Core/Geometry',[
      * @see BoxGeometry
      * @see EllipsoidGeometry
      *
-     * @demo {@link http://cesiumjs.org/Cesium/Apps/Sandcastle/index.html?src=Geometry%20and%20Appearances.html|Geometry and Appearances Demo}
+     * @demo {@link https://cesiumjs.org/Cesium/Apps/Sandcastle/index.html?src=Geometry%20and%20Appearances.html|Geometry and Appearances Demo}
      *
      * @example
      * // Create geometry with a position attribute and indexed lines.
@@ -12297,7 +12310,7 @@ define('Core/BoxGeometry',[
      * @see BoxGeometry.createGeometry
      * @see Packable
      *
-     * @demo {@link http://cesiumjs.org/Cesium/Apps/Sandcastle/index.html?src=Box.html|Cesium Sandcastle Box Demo}
+     * @demo {@link https://cesiumjs.org/Cesium/Apps/Sandcastle/index.html?src=Box.html|Cesium Sandcastle Box Demo}
      *
      * @example
      * var box = new Cesium.BoxGeometry({
@@ -13060,6 +13073,24 @@ define('Core/BoxGeometry',[
             primitiveType : PrimitiveType.TRIANGLES,
             boundingSphere : new BoundingSphere(Cartesian3.ZERO, radius)
         });
+    };
+
+    var unitBoxGeometry;
+
+    /**
+     * Returns the geometric representation of a unit box, including its vertices, indices, and a bounding sphere.
+     * @returns {Geometry} The computed vertices and indices.
+     *
+     * @private
+     */
+    BoxGeometry.getUnitBox = function() {
+        if (!defined(unitBoxGeometry)) {
+            unitBoxGeometry = BoxGeometry.createGeometry(BoxGeometry.fromDimensions({
+                dimensions : new Cartesian3(1.0, 1.0, 1.0),
+                vertexFormat : VertexFormat.POSITION_ONLY
+            }));
+        }
+        return unitBoxGeometry;
     };
 
     return BoxGeometry;
@@ -16397,6 +16428,26 @@ define('Core/CylinderGeometry',[
         });
     };
 
+    var unitCylinderGeometry;
+
+    /**
+     * Returns the geometric representation of a unit cylinder, including its vertices, indices, and a bounding sphere.
+     * @returns {Geometry} The computed vertices and indices.
+     *
+     * @private
+     */
+    CylinderGeometry.getUnitCylinder = function() {
+        if (!defined(unitCylinderGeometry)) {
+            unitCylinderGeometry = CylinderGeometry.createGeometry(new CylinderGeometry({
+                topRadius : 1.0,
+                bottomRadius : 1.0,
+                length : 1.0,
+                vertexFormat : VertexFormat.POSITION_ONLY
+            }));
+        }
+        return unitCylinderGeometry;
+    };
+
     return CylinderGeometry;
 });
 
@@ -16781,6 +16832,24 @@ define('Core/EllipsoidGeometry',[
         });
     };
 
+    var unitEllipsoidGeometry;
+
+    /**
+     * Returns the geometric representation of a unit ellipsoid, including its vertices, indices, and a bounding sphere.
+     * @returns {Geometry} The computed vertices and indices.
+     *
+     * @private
+     */
+    EllipsoidGeometry.getUnitEllipsoid = function() {
+        if (!defined(unitEllipsoidGeometry)) {
+            unitEllipsoidGeometry = EllipsoidGeometry.createGeometry((new EllipsoidGeometry({
+                radii : new Cartesian3(1.0, 1.0, 1.0),
+                vertexFormat : VertexFormat.POSITION_ONLY
+            })));
+        }
+        return unitEllipsoidGeometry;
+    };
+
     return EllipsoidGeometry;
 });
 
@@ -17016,15 +17085,10 @@ define('Workers/createVectorTileGeometries',[
 
     var scratchCartesian = new Cartesian3();
 
-    var boxGeometry;
     var packedBoxLength = Matrix4.packedLength + Cartesian3.packedLength;
-
-    var cylinderGeometry;
     var packedCylinderLength = Matrix4.packedLength + 2;
-
-    var ellipsoidGeometry;
     var packedEllipsoidLength = Matrix4.packedLength + Cartesian3.packedLength;
-    var packedSphereLength = Matrix4.packedLength + 1;
+    var packedSphereLength = Cartesian3.packedLength + 1;
 
     var scratchModelMatrixAndBV = {
         modelMatrix : new Matrix4(),
@@ -17085,7 +17149,8 @@ define('Workers/createVectorTileGeometries',[
 
         var sphereRadius = spheres[sphereIndex++];
 
-        var sphereModelMatrix = Matrix4.unpack(spheres, sphereIndex, scratchModelMatrixAndBV.modelMatrix);
+        var sphereTranslation = Cartesian3.unpack(spheres, sphereIndex, scratchCartesian);
+        var sphereModelMatrix = Matrix4.fromTranslation(sphereTranslation, scratchModelMatrixAndBV.modelMatrix);
         Matrix4.multiplyByUniformScale(sphereModelMatrix, sphereRadius, sphereModelMatrix);
 
         var boundingVolume = scratchModelMatrixAndBV.boundingVolume;
@@ -17245,22 +17310,9 @@ define('Workers/createVectorTileGeometries',[
         var numberOfEllipsoids = defined(ellipsoids) ? ellipsoidBatchIds.length : 0;
         var numberOfSpheres = defined(spheres) ? sphereBatchIds.length : 0;
 
-        if (!defined(boxGeometry)) {
-            boxGeometry = BoxGeometry.createGeometry(BoxGeometry.fromDimensions({
-                dimensions : new Cartesian3(1.0, 1.0, 1.0),
-                vertexFormat : VertexFormat.POSITION_ONLY
-            }));
-            cylinderGeometry = CylinderGeometry.createGeometry(new CylinderGeometry({
-                topRadius : 1.0,
-                bottomRadius : 1.0,
-                length : 1.0,
-                vertexFormat : VertexFormat.POSITION_ONLY
-            }));
-            ellipsoidGeometry = EllipsoidGeometry.createGeometry((new EllipsoidGeometry({
-                radii : new Cartesian3(1.0, 1.0, 1.0),
-                vertexFormat : VertexFormat.POSITION_ONLY
-            })));
-        }
+        var boxGeometry = BoxGeometry.getUnitBox();
+        var cylinderGeometry = CylinderGeometry.getUnitCylinder();
+        var ellipsoidGeometry = EllipsoidGeometry.getUnitEllipsoid();
 
         var boxPositions = boxGeometry.attributes.position.values;
         var cylinderPositions = cylinderGeometry.attributes.position.values;

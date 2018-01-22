@@ -15,10 +15,13 @@ fi
 pwd=$(pwd)
 DEPLOY_TARGET=$2
 RC_FILE=rc_$DEPLOY_TARGET
-SNAPSHOTDIR=/var/www/vhosts/mf-geoadmin3/private/snapshots/$1
 
 # Prepare snapshot
-cd $SNAPSHOTDIR/geoadmin/code/geoadmin
+if [ ! -d $BASE_DIR ]; then
+  echo "Make sure the folder to deploy exists: $BASE_DIR"
+  exit 1
+fi
+cd $BASE_DIR
 if [ "$KEEP_VERSION" = "false" ]; then
   make .build-artefacts/last-version
   export KEEP_VERSION='true'
@@ -49,8 +52,8 @@ if [ ! "${answer}" == "y" ]; then
 fi
 
 # Upload to S3
-echo "$pwd/.build-artefacts/python-venv/bin/python $pwd/scripts/s3manage.py upload $SNAPSHOTDIR/geoadmin/code/geoadmin $DEPLOY_TARGET"
-$pwd/.build-artefacts/python-venv/bin/python $pwd/scripts/s3manage.py upload $SNAPSHOTDIR/geoadmin/code/geoadmin $DEPLOY_TARGET
+echo "$pwd/.build-artefacts/python-venv/bin/python $pwd/scripts/s3manage.py upload $BASE_DIR $DEPLOY_TARGET"
+$pwd/.build-artefacts/python-venv/bin/python $pwd/scripts/s3manage.py upload $BASE_DIR $DEPLOY_TARGET false
 
 # Flush varnish
 echo "Flushing varnishes"

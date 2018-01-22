@@ -98,6 +98,7 @@ S3_SRC_BASE_PATH ?=
 CLONEDIR = /home/$(USER_NAME)/tmp/branches/${DEPLOY_GIT_BRANCH}
 DEEP_CLEAN ?= "false"
 NAMED_BRANCH ?= "true"
+SNAPSHOTDIR ?= /var/www/vhosts/mf-geoadmin3/private/snapshots/${SNAPSHOT}/geoadmin/code/geoadmin
 
 ## Python interpreter can't have space in path name
 ## So prepend all python scripts with python cmd
@@ -252,17 +253,21 @@ deploydev:
 		./scripts/deploydev.sh; \
 	fi
 
+.PHONY: s3deploy
+s3deploy: 
+	./scripts/deploysnapshot.sh ${BASE_DIR} ${DEPLOY_TARGET} ${KEEP_VERSION}
+
 .PHONY: s3deployinfra
 s3deployinfra: guard-SNAPSHOT .build-artefacts/requirements.timestamp
-	./scripts/deploysnapshot.sh $(SNAPSHOT) infra;
+	make s3deploy BASE_DIR=$(SNAPSHOTDIR) DEPLOY_TARGET=infra
 
 .PHONY: s3deployint
 s3deployint: guard-SNAPSHOT .build-artefacts/requirements.timestamp
-	./scripts/deploysnapshot.sh $(SNAPSHOT) int;
+	make s3deploy BASE_DIR=$(SNAPSHOTDIR) DEPLOY_TARGET=int
 
 .PHONY: s3deployprod
 s3deployprod: guard-SNAPSHOT .build-artefacts/requirements.timestamp
-	./scripts/deploysnapshot.sh $(SNAPSHOT) prod;
+	make s3deploy BASE_DIR=$(SNAPSHOTDIR) DEPLOY_TARGET=prod
 
 .PHONY: s3deploybranch
 s3deploybranch: guard-DEPLOY_GIT_BRANCH \

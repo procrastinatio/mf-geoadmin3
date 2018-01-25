@@ -1,5 +1,5 @@
 SHELL = /bin/bash
-
+#trdt
 # Macro functions
 lastvalue = $(shell if [ -f .build-artefacts/last-$1 ]; then cat .build-artefacts/last-$1 2> /dev/null; else echo '-none-'; fi;)
 

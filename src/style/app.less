@@ -1775,6 +1775,15 @@ body:not(.embed) {
     background: rgba(255,255,255,.7);
   }
 
+  .corner-ribbon {
+    bottom: 22px;
+
+    @media (max-width: @screen-tablet) {
+      bottom: auto;
+      top: 9px;
+    }
+  }
+
   @media (max-width: 350px) {
     #buttonGroup {
       display: none;
@@ -1789,26 +1798,28 @@ body:not(.embed) {
   top: auto;
   bottom: 50px; /* Under cesium inspectors */
   left: -100px;
-  z-index: 40;
+  z-index: 1000;
   width: 300px;
   background: red;
   color: white;
-  text-align: center;
+  text-align: left;
   line-height: 50px;
   letter-spacing: 1px;
   transform: rotate(45deg);
+  padding-left: 96px;
 
   @media (max-width: @screen-tablet) {
     /* top-left */
-    top: 108px;
+    top: 60px;
     bottom: auto;
-    left: -50px;
-    width: 200px;
+    left: -78px;
+    width: 340px;
+    padding-left: 75px;
     transform: rotate(-45deg);
   }
 
   @media (max-width: @screen-phone) {
-    top: 70px;
+    top: 35px;
   }
 }
 

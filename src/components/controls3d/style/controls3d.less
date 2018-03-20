@@ -169,6 +169,24 @@
    }
 }
 
+
+.embed {
+
+  [ga-controls3d] {
+
+    .ga-inc, .ga-dec {
+
+      @media (max-width: @screen-phone), (max-height: @screen-s-height) {
+        display: inherit;
+        width: 20px;
+        height: 18px;
+        font-size: 18px;
+        margin: 0px;
+      }
+    }
+  }
+}
+
 .ga-pegman-dragging {
   cursor: crosshair;
 

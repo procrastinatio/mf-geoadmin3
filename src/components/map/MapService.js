@@ -630,9 +630,9 @@ goog.require('ga_urlutils_service');
               }, {
                 serverLayerName: 'SLBM-LV03-mbtiles',
                 //styleUrl: 'https://api.mapbox.com/styles/v1/vib2d/' +
-                //    'cj2btdr0d00532ro5ix21uls4' + tk,
+                  //  'cj2btdr0d00532ro5ix21uls4' + tk,
                 styleUrl: 'https://tileserver.dev.bgdi.ch/styles/' +
-                    'superlightbasemap.json',
+                    'superlightbasemap/style.json',
                 styleSource: 'lightbasemap',
                 tilePixelRatio: 4,
                 tileSize: 1024

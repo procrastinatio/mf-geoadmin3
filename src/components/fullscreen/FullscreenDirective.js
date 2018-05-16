@@ -9,7 +9,8 @@ goog.require('ga_permalink');
     'ga_permalink'
   ]);
 
-  module.directive('gaFullscreen', function(gaPermalink, gaBrowserSniffer) {
+  module.directive('gaFullscreen', function($document, gaPermalink,
+      gaBrowserSniffer) {
     return {
       restrict: 'A',
       scope: {
@@ -25,8 +26,10 @@ goog.require('ga_permalink');
         // Documentation about Fullscreen API flavours:
         // https://docs.google.com/spreadsheet/
         //  ccc?key=0AvgmqEgDEiu5dGtqVEUySnBvNkxiYlAtbks1eDFibkE#gid=0
-        var target = document.documentElement;
-        scope.fullscreenSupported = (
+        var doc = $document[0];
+        var body = $(doc.body);
+        var target = doc.documentElement;
+        scope.fullscreenSupported = !!(
           // IE 11 bug when the page is inside an iframe:
           // http://connect.microsoft.com/IE/feedback/details/814527/
           // ie11-iframes-body-offsetwidth-incorrect-when-iframe-is-in
@@ -37,6 +40,11 @@ goog.require('ga_permalink');
             target.webkitRequestFullScreen ||
             target.msRequestFullscreen)
         );
+
+        if (!scope.fullscreenSupported) {
+          element.remove();
+          return;
+        }
 
         scope.click = function() {
           if (target.requestFullScreen) {
@@ -53,42 +61,49 @@ goog.require('ga_permalink');
           }
         };
 
-        if (scope.fullscreenSupported) {
-          var onFullscreenChange = function() {
-            $(document.body).addClass(fullScreenCssClass);
+        var onFullscreenChange = function() {
+          body.addClass(fullScreenCssClass);
 
-            // Safari forbids inputs in full screen mode
-            // for security reasons
-            if (gaBrowserSniffer.safari) {
-              $(document.body).addClass(inputsForbidCssClass);
-            }
+          // Safari forbids inputs in full screen mode
+          // for security reasons
+          if (gaBrowserSniffer.safari) {
+            body.addClass(inputsForbidCssClass);
+          }
 
-            scope.map.updateSize();
-            if (!(document.fullscreenElement ||
-                document.mozFullScreenElement ||
-                document.webkitFullscreenElement ||
-                document.msFullscreenElement)) {
-              gaPermalink.refresh();
-              $(document.body).removeClass(fullScreenCssClass);
-              $(document.body).removeClass(inputsForbidCssClass);
-            }
-          };
+          scope.map.updateSize();
 
-          document.addEventListener('fullscreenchange', onFullscreenChange);
-          document.addEventListener('mozfullscreenchange', onFullscreenChange);
-          document.addEventListener('webkitfullscreenchange',
-              onFullscreenChange);
-          document.addEventListener('MSFullscreenChange', onFullscreenChange);
+          if (!(doc.fullscreenElement ||
+              doc.mozFullScreenElement ||
+              doc.webkitFullscreenElement ||
+              doc.msFullscreenElement)) {
+            gaPermalink.refresh();
 
-          // Catch F11 event to provide an HTML5 fullscreen instead of
-          // default one
-          $(document).on('keydown', function(event) {
-            if (event.which === 122) {
-              event.preventDefault();
-              scope.trigger('click'); // From fullscreen API
-            }
-          });
-        }
+            body.removeClass(fullScreenCssClass);
+            body.removeClass(inputsForbidCssClass);
+          }
+        };
+
+        $document.on('fullscreenchange mozfullscreenchange ' +
+            'webkitfullscreenchange MSFullscreenChange', onFullscreenChange);
+
+        var onKeyDown = function(event) {
+          if (event.which === 122) {
+            event.preventDefault();
+            scope.click(); // From fullscreen API
+          }
+        };
+
+        // Catch F11 event to provide an HTML5 fullscreen instead of
+        // default one
+        $document.on('keydown', onKeyDown);
+
+        scope.$on('$destroy', function() {
+          $document.off('fullscreenchange mozfullscreenchange ' +
+              'webkitfullscreenchange MSFullscreenChange', onFullscreenChange);
+          $document.off('keydown', onKeyDown);
+          body.removeClass(fullScreenCssClass);
+          body.removeClass(inputsForbidCssClass);
+        });
       }
     };
   });

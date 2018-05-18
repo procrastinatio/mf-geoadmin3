@@ -519,6 +519,7 @@ goog.require('ga_urlutils_service');
                 dimensions: {
                   'Time': timestamp
                 },
+                tilePixelRatio: window.devicePixelRatio >= 2 ? 2 : 1,
                 // Workaround: Set a cache size of zero when layer is
                 // timeEnabled see:
                 // https://github.com/geoadmin/mf-geoadmin3/issues/3491

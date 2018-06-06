@@ -153,12 +153,22 @@ goog.require('ga_waitcursor_service');
     gaLayersProvider.vectorTilesSubdomains =
         gaGlobalOptions.staging === 'prod' ? hundred : dflt;
 
+    //alert(window.devicePixelRatio);
+    var dpr = Math.floor(window.devicePixelRatio);
+    if (dpr) {
+      dpr = '@' + dpr + 'x';
+    } else {
+      dpr = '';
+    }
+
     // Map services urls
     gaLayersProvider.wmsUrl = gaGlobalOptions.wmsUrl;
     gaLayersProvider.wmtsUrl = gaGlobalOptions.wmtsUrl +
-        '/1.0.0/{Layer}/default/{Time}/{TileMatrixSet}/{z}/{x}/{y}.{Format}';
+        '/1.0.0/{Layer}/default/{Time}/{TileMatrixSet}/{z}/{x}/{y}' + dpr +
+        '.{Format}';
     gaLayersProvider.wmtsLV03Url = gaGlobalOptions.wmtsUrl +
-        '/1.0.0/{Layer}/default/{Time}/{TileMatrixSet}/{z}/{y}/{x}.{Format}';
+        '/1.0.0/{Layer}/default/{Time}/{TileMatrixSet}/{z}/{y}/{x}' + dpr +
+        '.{Format}';
     gaLayersProvider.terrainUrl = gaGlobalOptions.terrainUrl +
         '/1.0.0/{Layer}/default/{Time}/4326';
     gaLayersProvider.vectorTilesUrl = gaGlobalOptions.vectorTilesUrl +

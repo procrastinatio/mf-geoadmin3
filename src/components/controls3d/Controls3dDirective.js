@@ -64,7 +64,7 @@ goog.require('ga_maputils_service');
           if (isElementEditable(event.target)) {
             return;
           }
-         
+
           var moveAmount = 200;
           var zoomAmount = 400;
           var lowPitch = camera.pitch < Cesium.Math.toRadians(-30);
@@ -124,7 +124,7 @@ goog.require('ga_maputils_service');
         };
 
         document.addEventListener('keydown', scope.onKey);
-     
+
         scene.postRender.addEventListener(function() {
           if (moving) {
             var tiltOnGlobe = olcs.core.computeSignedTiltAngleOnGlobe(scene);

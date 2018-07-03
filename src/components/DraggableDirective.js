@@ -23,6 +23,9 @@ goog.require('ga_browsersniffer_service');
   module.directive('gaDraggable', function($document, gaBrowserSniffer) {
     return function(scope, element, attr) {
       var startX = 0, startY = 0, x = null, y = null;
+      
+      // Coordinates of the border of the document.body
+      var top, left, bottom, right;
       var eventKey = gaBrowserSniffer.events;
       var regex = /^(input|textarea|a|button)$/i;
 
@@ -34,6 +37,10 @@ goog.require('ga_browsersniffer_service');
         element.find(attr['gaDraggable']) :
         element;
 
+      var isDropZone =  (attr['gaDraggableOnlyParent'] !== '') ?
+        element.find(attr['gaDraggable']) :
+        element;
+      
       if (!dragZone || !dragZone.length) {
         dragZone = element;
       }
@@ -52,6 +59,10 @@ goog.require('ga_browsersniffer_service');
 
         startX = getMouseEventX(evt) - x;
         startY = getMouseEventY(evt) - y;
+        
+        left = -startX;
+        top = -startY;
+        
         $document.on(eventKey.move, drag);
         $document.on(eventKey.end, dragend);
       });
@@ -97,8 +108,8 @@ goog.require('ga_browsersniffer_service');
 
       // Ensure the x coordinate has a valid value
       var adjustX = function(x) {
-        if (x < 0) {
-          x = 0;
+        if (x < left) {
+          x = left;
         } else if (x + element.outerWidth() > $(document.body).width()) {
           x = $(document.body).width() - element.outerWidth();
         }
@@ -107,8 +118,8 @@ goog.require('ga_browsersniffer_service');
 
       // Ensure the y coordinate has a valid value
       var adjustY = function(y) {
-        if (y < 0) {
-          y = 0;
+        if (y < top) {
+          y = top;
         } else if (y + element.height() > $(document.body).height()) {
           var newY = $(document.body).height() - element.height();
 

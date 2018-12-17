@@ -578,7 +578,8 @@ goog.require('ga_urlutils_service');
 
             } else { // vector
 
-              var disposeInternal = ol.VectorImageTile.prototype.disposeInternal;
+              var disposeInternal =
+                  ol.VectorImageTile.prototype.disposeInternal;
               ol.VectorImageTile.prototype.disposeInternal = function() {
                 for (var key in this.context_) {
                   var context = this.context_[key];

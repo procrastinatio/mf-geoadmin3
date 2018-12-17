@@ -186,6 +186,9 @@ goog.require('ga_networkstatus_service');
         };
 
         var handlePostCompose = function(evt) {
+          if (!evt.context) {
+            return;
+          }
           evt.context.save();
           if (moving) { // Redraw rectangle only when roatting and zooming
             updateRectangle();

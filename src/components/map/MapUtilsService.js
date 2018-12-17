@@ -577,6 +577,17 @@ goog.require('ga_urlutils_service');
               olSource = new ol.source.XYZ(sourceOpts);
 
             } else { // vector
+
+              var disposeInternal = ol.VectorImageTile.prototype.disposeInternal;
+              ol.VectorImageTile.prototype.disposeInternal = function() {
+                for (var key in this.context_) {
+                  var context = this.context_[key];
+                  context.canvas.width = context.canvas.height = 0;
+                }
+                disposeInternal.call(this);
+              };
+
+              sourceOpts.cacheSize = 0;
               sourceOpts.format = new ol.format.MVT();
               olSource = new ol.source.VectorTile(sourceOpts);
             }

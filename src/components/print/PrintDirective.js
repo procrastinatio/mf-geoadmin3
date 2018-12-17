@@ -55,6 +55,7 @@ goog.require('ga_urlutils_service');
     };
 
     var activate = function() {
+      // TOFIX: map has no access to vector context anymore. since > 5.3.0
       deregister = [
         $scope.map.on('precompose', handlePreCompose),
         $scope.map.on('postcompose', handlePostCompose),
@@ -91,11 +92,19 @@ goog.require('ga_urlutils_service');
 
     // Compose events
     var handlePreCompose = function(evt) {
+      // TOFIX: evt has no access to context anymore. since > 5.3.0
+      if (!evt.context) {
+        return;
+      }
       var ctx = evt.context;
       ctx.save();
     };
 
     var handlePostCompose = function(evt) {
+      // TOFIX: evt has no access to context anymore. since > 5.3.0
+      if (!evt.context) {
+        return;
+      }
       var ctx = evt.context,
         size = $scope.map.getSize(),
         minx = printRectangle[0],

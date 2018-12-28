@@ -5,6 +5,9 @@ itemscope itemtype="http://schema.org/WebApplication"
 % if device == 'mobile' and mode=='prod' :
  manifest="geoadmin.${version}.appcache"
 % endif
+% if device == 'embed' :
+  ga-embedded-scroll-event-handler
+% endif
 >
   <head>
     <!--![if !HTML5]>
@@ -186,7 +189,7 @@ itemscope itemtype="http://schema.org/WebApplication"
       <div id="search-container" ng-controller="GaSearchController">
         <div ga-search ga-search-map="map" ga-search-options="options" ga-search-ol3d="::ol3d"></div>
       </div>
-
+      <div ga-embedded-scroll-overlay></div>
       <div ga-scale-line ga-scale-line-map="map" ng-show="!globals.is3dActive"></div>
   % endif
 

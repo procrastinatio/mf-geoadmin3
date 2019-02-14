@@ -323,50 +323,58 @@ goog.require('ga_urlutils_service');
                   url: 'https://vectortiles.geo.admin.ch/gl-styles/ch.swisstopo.leichte-basiskarte.vt/v006/style.json'
                 }, {
                   id: 'color',
-                  url: 'https://vectortiles.geo.admin.ch/gl-styles/ch.swisstopo.leichte-basiskarte-vintage.vt/v006/style.json'
+                  url: 'https://cms.geo.admin.ch/www.geo.admin.ch/cms_api/gl-styles/ch.swisstopo.leichte-basiskarte-vintage.vt_v006.json'
                 }, {
                   id: 'grey',
-                  url: 'https://vectortiles.geo.admin.ch/gl-styles/ch.swisstopo.leichte-basiskarte-grey.vt/v006/style.json'
+                  url: 'https://cms.geo.admin.ch/www.geo.admin.ch/cms_api/gl-styles/ch.swisstopo.leichte-basiskarte-grey.vt_v006.json'
                 }, {
                   id: 'lsd',
-                  url: 'https://vectortiles.geo.admin.ch/gl-styles/ch.swisstopo.leichte-basiskarte-lsd.vt/v006/style.json'
+                  url: 'https://cms.geo.admin.ch/www.geo.admin.ch/cms_api/gl-styles/ch.swisstopo.leichte-basiskarte-lsd.vt_v006.json'
                 }],
                 edits: [{
                   id: 'settlement',
-                  regex: /^settlement/,
+                  regex: /settlement/,
                   props: [
                     ['paint', 'fill-color', '{color}']
                   ]
-
                 }, {
                   id: 'landuse',
-                  regex: /^landuse/,
+                  regex: /landuse/,
                   props: [
                     ['paint', 'fill-color', '{color}']
                   ]
-
                 }, {
                   id: 'hydrology',
-                  regex: /^hydrology/,
+                  regex: /hydrology/,
                   props: [
                     ['paint', 'fill-color', '{color}']
                   ]
-
                 }, {
                   id: 'roadtraffic',
-                  regex: /^roadtraffic/,
+                  regex: /roadtraffic/,
                   props: [
                     ['paint', 'line-color', '{color}'],
                     ['paint', 'line-width', '{size}']
                   ]
-
                 }, {
                   id: 'labels',
-                  regex: /^labels/,
+                  regex: /labels/,
                   props: [
                     ['layout', 'visibility', '{toggle}', 'visible', 'none'],
                     ['paint', 'text-color', '{color}'],
                     ['layout', 'text-size', '{size}']
+                  ]
+                }, {
+                  id: 'woodland',
+                  regex: /woodland/,
+                  props: [
+                    ['paint', 'fill-color', '{color}']
+                  ]
+                }, {
+                  id: 'background',
+                  regex: /territory/,
+                  props: [
+                    ['paint', 'fill-color', '{color}']
                   ]
                 }]
               };

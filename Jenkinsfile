@@ -8,8 +8,12 @@ node(label: 'jenkins-slave') {
   def e2eTargetUrl
   def deployTarget = 'int'
   def testPassed = false
+  def FASTTRACK = true
    
-  def isValid = { versionString ->  (versionString =~ /(master|mvt_clean|config_and_build)\/[a-f0-9]{7}\/\d{10}/) }
+  def isValidS3FullPath = { versionString ->  (versionString =~ /(master|mvt_clean|config_and_build)\/[a-f0-9]{7}\/\d{10}/) }
+  def isNotMaster = { ot -> !( ot =~ /^(master|mvt_clean).*$/ )  }
+  //def isMaster = { branchString ->  (['master', 'mvt_clean'].contains(branchString)) }
+
 
   // If it's a branch
   def deployGitBranch = env.BRANCH_NAME
@@ -20,12 +24,13 @@ node(label: 'jenkins-slave') {
     deployGitBranch = env.CHANGE_BRANCH
     namedBranch = true
   }
-
+  // 
+  def isMaster = (['master', 'mvt_clean'].contains(deployGitBranch)) 
   // Branch or PR to 'master' is for mf-geoadmin3, to 'mvt_clean' for MVT
   // legacy/mf-geoadmin3 --> mf-geoadmin3 bucket
   // Project mvt         --> mf-geoadmin4 bucket
   def project = 'mf-geoadmin3'
-  if (env.CHANGE_TARGET !='master') {
+  if (env.CHANGE_TARGET == 'mvt_clean' || deployGitBranch == 'mvt_clean') {
       project = 'mvt'
   }
 
@@ -42,7 +47,9 @@ node(label: 'jenkins-slave') {
     }
 
     stage('Lint') {
-      sh 'make lint'
+      if (!FASTTRACK) {
+        sh 'make lint'
+     }
     }
 
     // Very important for greenkeeper branches
@@ -118,17 +125,19 @@ node(label: 'jenkins-slave') {
 
     stage('Test e2e') {
       def target = 'make teste2e E2E_TARGETURL=' + e2eTargetUrl
-      parallel (
-        'Firefox': {
-          sh target + ' E2E_BROWSER=firefox'
-        },
-        'Chrome': {
-          sh target + ' E2E_BROWSER=chrome'
-        },
-        'Safari': {
-          sh target + ' E2E_BROWSER=safari'
-        }
-      )
+      if (!FASTTRACK) {
+        parallel (
+          'Firefox': {
+            sh target + ' E2E_BROWSER=firefox'
+          },
+          'Chrome': {
+            sh target + ' E2E_BROWSER=chrome'
+          },
+          'Safari': {
+            sh target + ' E2E_BROWSER=safari'
+          }
+        )
+      }
 
       if (!namedBranch) {
         // Activate the new version if tests succceed
@@ -136,11 +145,15 @@ node(label: 'jenkins-slave') {
       }
     }
     stage('Deploy prod') {
-        echo 'Testing if should deployed to prod'
-        if (isValid(s3VersionPath)) {
+        echo 'Testing if should deployed to prod: ' + s3VersionPath
+        if (isValidS3FullPath(s3VersionPath)) {
         //if (testPassed && !namedBranch) {
-            echo 'S3VersionPath is correct' + s3VersionPath
+            echo 'S3VersionPath is correct: ' + s3VersionPath
             echo 'Deploying to production (dummy)'
+            sh env.WORKSPACE + '/.build-artefacts/python-venv/bin/pip install -U awscli'
+            sh env.WORKSPACE + '/.build-artefacts/python-venv/bin/aws s3 cp --recursive --dryrun  s3://' + env.S3_MF_GEOADMIN3_INT + '/' + s3VersionPath   + '  s3://' + env.S3_MF_GEOADMIN3_PROD + '/' + s3VersionPath
+        } else {
+          echo 'The version cannot be deployed: ' + s3VersionPath
         }
     }
 

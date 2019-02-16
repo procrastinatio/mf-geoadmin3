@@ -192,6 +192,7 @@ MAKO_CMD=${PYTHON_VENV}/bin/mako-render
 FLAKE8_CMD=${PYTHON_VENV}/bin/flake8
 AUTOPEP8_CMD=${PYTHON_VENV}/bin/autopep8
 CLOSURE_COMPILER=node_modules/google-closure-compiler/compiler.jar
+AWS_CMD=${PYTHON_VENV}/bin/aws
 
 # Node executables
 NODE_BIN=node_modules/.bin
@@ -230,6 +231,10 @@ help:
 	@echo
 	@echo "Possible targets:"
 	@echo
+	@echo "--------------------------------------------------------------------------"
+	@echo "|                     LOCAL DEVELOPMENT                                   |"
+	@echo "--------------------------------------------------------------------------"
+	@echo
 	@echo "- user                Build the app using user specific environment variables (see $(USER_SOURCE) file)"
 	@echo "- env                 Install NVM and set the correct node version to build the application"
 	@echo "- all                 Build the app using current environment variables"
@@ -248,6 +253,16 @@ help:
 	@echo "- fixrights           Fix rights in common folder"
 	@echo "- clean               Remove generated files"
 	@echo "- cleanall            Remove all the build artefacts"
+	@echo "- cesium              Update Cesium.min.js and Cesium folder. Needs Node js version >= 6."
+	@echo "- olcesium            Update olcesium.js, olcesium-debug.js. Needs Node js version >= 6 and java >=8."
+	@echo "- libs                Update js librairies used in index.html, see npm packages defined in section 'dependencies' of package.json"
+	@echo "- translate           Generate the translation files (requires db user pwd in ~/.pgpass: dbServer:dbPort:*:dbUser:dbUserPwd)"
+	@echo "- help                Display this help"
+	@echo
+	@echo "--------------------------------------------------------------------------"
+	@echo "|                     DEPLOYEMENT                                        |"
+	@echo "--------------------------------------------------------------------------"
+	@echo
 	@echo "- deploydev           Deploys current github master to dev. Specify SNAPSHOT=true to create snapshot as well."
 	@echo "- s3deploybranchint   Build a branch and deploy it to S3 int. Defaults to the current branch name."
 	@echo "- s3deploybranchinfra Build a branch and deploy it to S3 infra. Defaults to the current branch name."
@@ -266,14 +281,10 @@ help:
 	@echo "- s3infoprod          Get version info on remote prod bucket. (usage only: make s3infoprod S3_VERSION_PATH=<branch>/<sha>/<version>)"
 	@echo "- s3deleteint         Delete a project version in a remote int bucket. (usage: make s3deleteint S3_VERSION_PATH=<branch> or <branch>/<sha>/<version>)"
 	@echo "- s3deleteprod        Delete a project version in a remote prod bucket. (usage: make s3deleteprod S3_VERSION_PATH=<branch> or <branch>/<sha>/<version>)"
+	@echo "- s3copyintprod       Copy a build S3_VERSION_PATH='${S3_VERSION_PATH}' from $(S3_MF_GEOADMIN3_INT) to $(S3_MF_GEOADMIN3_PROD) (as defined by PROJECT=$(PROJECT)"
 	@echo "- s3uploadconfigint   Upload config to int bucket (as defined by S3_MF_GEOADMIN3_INT=$(S3_MF_GEOADMIN3_INT))"
 	@echo "- s3uploadconfigprod  Upload config to prod bucket (as defined by S3_MF_GEOADMIN3_PROD=$(S3_MF_GEOADMIN3_PROD))"
 	@echo "- flushvarnish        Flush varnish instances. (usage: make flushvarnish DEPLOY_TARGET=<int|prod|infra>)"
-	@echo "- cesium              Update Cesium.min.js and Cesium folder. Needs Node js version >= 6."
-	@echo "- olcesium            Update olcesium.js, olcesium-debug.js. Needs Node js version >= 6 and java >=8."
-	@echo "- libs                Update js librairies used in index.html, see npm packages defined in section 'dependencies' of package.json"
-	@echo "- translate           Generate the translation files (requires db user pwd in ~/.pgpass: dbServer:dbPort:*:dbUser:dbUserPwd)"
-	@echo "- help                Display this help"
 	@echo
 	@echo "Variables:"
 	@echo
@@ -451,6 +462,21 @@ s3deploybranch: guard-CLONEDIR \
 # Upload the configs
 s3uploadconfig%: $(CONFIG_FILES)
 		$(foreach json,$^, gzip -c $(json) | aws s3 cp  $(S3_UPLOAD_HEADERS) - s3://$(S3_MF_GEOADMIN3_$(shell echo $(*)| tr a-z A-Z))/$(json);)
+
+# Copy a version from int to prod (only non named version)
+# Try not to copy recursively from /
+# TODO: remove --dryrun
+IS_VALID_S3_PATH := $(shell [[ "${S3_VERSION_PATH}"  =~ (master|mvt_clean)/[0-9a-f]+/[0-9]+ ]] && echo matched)
+
+ifdef IS_VALID_S3_PATH
+.PHONY: s3copyintprod
+s3copyintprod: guard-S3_VERSION_PATH guard-PROJECT guard-S3_BUCKET_INT guard-S3_BUCKET_PROD 
+			$(AWS_CMD) s3 cp --recursive --dryrun s3://$(S3_BUCKET_INT)/$(S3_VERSION_PATH)   s3://$(S3_BUCKET_PROD)/$(S3_VERSION_PATH)
+else
+.PHONY: s3copyintprod
+s3copyintprod:
+				$(info "Please set S3_VERSION_PATH as <branch>/<sha>/<timestamp>")
+endif
 
 .PHONY: s3deploybranchint
 s3deploybranchint:

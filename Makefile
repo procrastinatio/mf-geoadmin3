@@ -282,9 +282,15 @@ help:
 	@echo "- s3deleteint         Delete a project version in a remote int bucket. (usage: make s3deleteint S3_VERSION_PATH=<branch> or <branch>/<sha>/<version>)"
 	@echo "- s3deleteprod        Delete a project version in a remote prod bucket. (usage: make s3deleteprod S3_VERSION_PATH=<branch> or <branch>/<sha>/<version>)"
 	@echo "- s3copyintprod       Copy a build S3_VERSION_PATH='${S3_VERSION_PATH}' from $(S3_MF_GEOADMIN3_INT) to $(S3_MF_GEOADMIN3_PROD) (as defined by PROJECT=$(PROJECT)"
+	@echo "- flushvarnish        Flush varnish instances. (usage: make flushvarnish DEPLOY_TARGET=<int|prod|infra>)"
+	@echo
+	@echo "--------------------------------------------------------------------------"
+	@echo "|                     CONFIGURATIONS                                     |"
+	@echo "--------------------------------------------------------------------------"
+	@echo
 	@echo "- s3uploadconfigint   Upload config to int bucket (as defined by S3_MF_GEOADMIN3_INT=$(S3_MF_GEOADMIN3_INT))"
 	@echo "- s3uploadconfigprod  Upload config to prod bucket (as defined by S3_MF_GEOADMIN3_PROD=$(S3_MF_GEOADMIN3_PROD))"
-	@echo "- flushvarnish        Flush varnish instances. (usage: make flushvarnish DEPLOY_TARGET=<int|prod|infra>)"
+	@echo
 	@echo
 	@echo "Variables:"
 	@echo

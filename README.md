@@ -137,7 +137,7 @@ This runs it with the given target URL.
 
 These tests are not part of the normal build. They need to be launched manually.
 
-# Deploying project and branches
+# Deploying application (master and branches)
 
 ## Building and deploying to AWS S3
 
@@ -145,9 +145,9 @@ To build the current branch and upload it to AWS S3 int, use:
 
     make s3deploybranch
 
-Branches are stored in the user environments under:
+Branches are build in the user environments under:
 
-   ~/tmp/branches/{branch_name}
+    ${HOME}/tmp/branches/{branch_name}
 
 To upload a different branch, use:
 
@@ -229,6 +229,26 @@ To delete a named branch:
 Per default, the API used in the **main** instance of mf-chsdi3. If you want
 to target a specific branch of mf-chsdi3, please adapt the `API_URL` variable
 in the `rc_branch.mako` file on **your branch**
+
+# Deploying the layers configuration
+
+The layers, topics and catolog configuration used by the application were once directly served by the `API`,
+then stored with the application atfer each build.
+
+Now they live on the same bucket, at `https://map.geo.admin.ch/configs`.
+
+Refresh configuration, with:
+
+    API_URL=//api3.geo.admin.ch make configs/
+
+Upload to the `int` bucket:
+
+
+    s3uploadconfigint
+
+and to the `prod` bucket:
+
+    s3uploadconfigprod
 
 # Flushing varnish
 

@@ -7,6 +7,9 @@ node(label: 'jenkins-slave') {
   def s3VersionPath
   def e2eTargetUrl
   def deployTarget = 'int'
+  def testPassed = false
+   
+  def isValid = { versionString ->  (versionString =~ /(master|mvt_clean|config_and_build)\/[a-f0-9]{7}\/\d{10}/) }
 
   // If it's a branch
   def deployGitBranch = env.BRANCH_NAME
@@ -16,6 +19,14 @@ node(label: 'jenkins-slave') {
   if (env.CHANGE_ID) {
     deployGitBranch = env.CHANGE_BRANCH
     namedBranch = true
+  }
+
+  // Branch or PR to 'master' is for mf-geoadmin3, to 'mvt_clean' for MVT
+  // legacy/mf-geoadmin3 --> mf-geoadmin3 bucket
+  // Project mvt         --> mf-geoadmin4 bucket
+  def project = 'mf-geoadmin3'
+  if (env.CHANGE_TARGET !='master') {
+      project = 'mvt'
   }
 
   // from jenkins-shared-librairies 
@@ -43,7 +54,7 @@ node(label: 'jenkins-slave') {
       sh 'make ' + deployTarget + ' DEPLOY_GIT_BRANCH=' + deployGitBranch + ' NAMED_BRANCH=' + namedBranch
     }
 
-    stage('Deploy') {
+    stage('Deploy int') {
       stdout = sh returnStdout: true, script: 'make s3copybranch DEPLOY_TARGET=' + deployTarget + ' DEPLOY_GIT_BRANCH=' + deployGitBranch + ' NAMED_BRANCH=' + namedBranch
       echo stdout
       def lines = stdout.readLines()
@@ -123,6 +134,14 @@ node(label: 'jenkins-slave') {
         // Activate the new version if tests succceed
         sh 'echo "yes" | make S3_VERSION_PATH=' + s3VersionPath + ' s3activate' + deployTarget
       }
+    }
+    stage('Deploy prod') {
+        echo 'Testing if should deployed to prod'
+        if (isValid(s3VersionPath)) {
+        //if (testPassed && !namedBranch) {
+            echo 'S3VersionPath is correct' + s3VersionPath
+            echo 'Deploying to production (dummy)'
+        }
     }
 
   } catch(e) {

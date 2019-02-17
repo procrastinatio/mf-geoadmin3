@@ -8,12 +8,10 @@ node(label: 'jenkins-slave') {
   def e2eTargetUrl
   def deployTarget = 'int'
   def testPassed = false
-  def FASTTRACK = true
-   
-  def isValidS3FullPath = { versionString ->  (versionString =~ /(master|mvt_clean|config_and_build)\/[a-f0-9]{7}\/\d{10}/) }
-  def isNotMaster = { ot -> !( ot =~ /^(master|mvt_clean).*$/ )  }
-  //def isMaster = { branchString ->  (['master', 'mvt_clean'].contains(branchString)) }
 
+  // Check for deploy to prod: only 'masters' and non-named branches.
+  def isValidS3FullPath = { versionString ->  (versionString =~ /(master|mvt_clean)\/[a-f0-9]{7}\/\d{10}/) }
+  def isNotMaster = { ot -> !( ot =~ /^(master|mvt_clean).*$/ )  }
 
   // If it's a branch
   def deployGitBranch = env.BRANCH_NAME
@@ -38,18 +36,13 @@ node(label: 'jenkins-slave') {
   utils.abortPreviousBuilds()
 
   try { 
-    stage('Checkout') {
+    stage('Checkout & setup') {
       checkout scm
-    }
-    
-    stage('env') {
       sh 'make env'
     }
 
     stage('Lint') {
-      if (!FASTTRACK) {
-        sh 'make lint'
-     }
+      sh 'make lint'
     }
 
     // Very important for greenkeeper branches
@@ -59,6 +52,17 @@ node(label: 'jenkins-slave') {
 
     stage('Build') {
       sh 'make ' + deployTarget + ' DEPLOY_GIT_BRANCH=' + deployGitBranch + ' NAMED_BRANCH=' + namedBranch
+    }
+
+    stage('Test') {
+      parallel (
+        'debug': {
+          sh 'make testdebug'
+        },
+        'release': {
+          sh 'make testrelease'
+        }
+      )
     }
 
     stage('Deploy int') {
@@ -112,44 +116,31 @@ node(label: 'jenkins-slave') {
       }
     }
 
-    stage('Test') {
-      parallel (
-        'debug': {
-          sh 'make testdebug'
-        },
-        'release': {
-          sh 'make testrelease'
-        }
-      )
-    }
 
     stage('Test e2e') {
       def target = 'make teste2e E2E_TARGETURL=' + e2eTargetUrl
-      if (!FASTTRACK) {
-        parallel (
-          'Firefox': {
-            sh target + ' E2E_BROWSER=firefox'
-          },
-          'Chrome': {
-            sh target + ' E2E_BROWSER=chrome'
-          },
-          'Safari': {
-            sh target + ' E2E_BROWSER=safari'
-          }
-        )
-      }
+      parallel (
+        'Firefox': {
+          sh target + ' E2E_BROWSER=firefox'
+        },
+        'Chrome': {
+          sh target + ' E2E_BROWSER=chrome'
+        },
+        'Safari': {
+          sh target + ' E2E_BROWSER=safari'
+        }
+      )
 
       if (!namedBranch) {
         // Activate the new version if tests succceed
         sh 'echo "yes" | make S3_VERSION_PATH=' + s3VersionPath + ' s3activate' + deployTarget
       }
     }
+
     stage('Deploy prod') {
         echo 'Checking if version may be deployed to prod: ' + s3VersionPath
         if (isValidS3FullPath(s3VersionPath)) {
             echo 'Deploying to production (dryrun!)'
-            sh env.WORKSPACE + '/.build-artefacts/python-venv/bin/pip install -U awscli'
-            sh env.WORKSPACE + '/.build-artefacts/python-venv/bin/aws s3 cp --recursive --dryrun  s3://' + env.S3_MF_GEOADMIN3_INT + '/' + s3VersionPath   + '  s3://' + env.S3_MF_GEOADMIN3_PROD + '/' + s3VersionPath
             sh 'PROJECT=' + project + ' S3_VERSION_PATH=' + s3VersionPath + ' make s3copyintprod'
         } else {
           echo 'Version will not be deployed: ' + s3VersionPath

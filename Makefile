@@ -170,15 +170,18 @@ CONFIG_FILES := $(wildcard configs/**/*.json)
 S3_UPLOAD_HEADERS = --content-encoding gzip --acl public-read --cache-control 'max-age=60' --content-type 'application/json'
 
 # Bucket name
-ifeq ($(PROJECT),mf-geoadmin3)
+ifneq ($(PROJECT),mvt)
+		export $(shell cat mf-geoadmin3.env)
 		S3_BUCKET_PROD := $(S3_MF_GEOADMIN3_PROD)
-		S3_BUCKET_INT := $(S3_MF_GEOADMIN3_INT)
-		S3_BUCKET_DEV := $(S3_MF_GEOADMIN3_DEV)
-		S3_BUCKET_INFRA := $(S3_MF_GEOADMIN3_INFRA)
+		S3_BUCKET_INT  := $(S3_MF_GEOADMIN3_INT)
+		S3_BUCKET_DEV  := $(S3_MF_GEOADMIN3_DEV)
+		S3_BUCKET_INFRA:= $(S3_MF_GEOADMIN3_INFRA)
 else
 		S3_BUCKET_PROD := mf-geoadmin4-prod-dublin
-		S3_BUCKET_INT:=   mf-geoadmin4-int-dublin
-
+		S3_BUCKET_INT  := mf-geoadmin4-int-dublin
+		S3_BUCKET_DEV  := mf-geoadmin4-dev-dublin
+		S3_BUCKET_INFRA:= mf-geoadmin4-infra-dublin
+		export $(shell cat mvt.env)
 endif
 
 
@@ -294,7 +297,7 @@ help:
 	@echo
 	@echo "Variables:"
 	@echo
-	@echo "- PROJECT                     (current value: ${PROJECT})"
+	@echo "- PROJECT                     Either 'mf-geoadmin3' or 'mvt'. Default to 'mf-geoadmin3' (current value: ${PROJECT})"
 	@echo "- API_URL Service URL         (build with: $(LAST_API_URL), current value: $(API_URL))"
 	@echo "- CONFIG_URL Service URL      (build with: $(LAST_CONFIG_URL), current value: $(CONFIG_URL))"
 	@echo "- ALTI_URL Alti service URL   (build with: $(LAST_ALTI_URL), current value: $(ALTI_URL))"

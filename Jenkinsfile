@@ -145,15 +145,14 @@ node(label: 'jenkins-slave') {
       }
     }
     stage('Deploy prod') {
-        echo 'Testing if should deployed to prod: ' + s3VersionPath
+        echo 'Checking if version may be deployed to prod: ' + s3VersionPath
         if (isValidS3FullPath(s3VersionPath)) {
-        //if (testPassed && !namedBranch) {
-            echo 'S3VersionPath is correct: ' + s3VersionPath
-            echo 'Deploying to production (dummy)'
+            echo 'Deploying to production (dryrun!)'
             sh env.WORKSPACE + '/.build-artefacts/python-venv/bin/pip install -U awscli'
             sh env.WORKSPACE + '/.build-artefacts/python-venv/bin/aws s3 cp --recursive --dryrun  s3://' + env.S3_MF_GEOADMIN3_INT + '/' + s3VersionPath   + '  s3://' + env.S3_MF_GEOADMIN3_PROD + '/' + s3VersionPath
+            sh 'PROJECT=' + project + ' S3_VERSION_PATH=' + s3VersionPath + ' make s3copyintprod'
         } else {
-          echo 'The version cannot be deployed: ' + s3VersionPath
+          echo 'Version will not be deployed: ' + s3VersionPath
         }
     }
 
